@@ -36,14 +36,38 @@ try {
       },
     };
   } else {
-    // Create actual Supabase client with options for cookie-based sessions
+    // Create actual Supabase client with enhanced cookie storage for better compatibility
     supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         storageKey: 'interview-ai-auth',
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        flowType: 'implicit',
+        // Use localStorage and cookies for best compatibility
+        storage: {
+          getItem: (key) => {
+            try {
+              return localStorage.getItem(key);
+            } catch (error) {
+              console.error('Error getting auth from localStorage:', error);
+              return null;
+            }
+          },
+          setItem: (key, value) => {
+            try {
+              localStorage.setItem(key, value);
+            } catch (error) {
+              console.error('Error setting auth in localStorage:', error);
+            }
+          },
+          removeItem: (key) => {
+            try {
+              localStorage.removeItem(key);
+            } catch (error) {
+              console.error('Error removing auth from localStorage:', error);
+            }
+          }
+        }
       }
     });
   }
@@ -73,5 +97,25 @@ try {
     },
   };
 }
+
+// Debug function to check if Supabase is properly configured
+export const checkSupabaseConnection = async () => {
+  try {
+    // Attempt to get current session
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Error checking Supabase connection:', error);
+      return false;
+    }
+    console.log('Supabase connection successful. Session:', data.session ? 'Active' : 'None');
+    return true;
+  } catch (err) {
+    console.error('Exception checking Supabase connection:', err);
+    return false;
+  }
+};
+
+// Initialize connection check
+checkSupabaseConnection();
 
 export { supabase };

@@ -100,6 +100,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               id: supabaseUser.id,
               name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
               avatar_url: supabaseUser.user_metadata?.avatar_url || null,
+              email_confirmed: false
             }
           ])
           .select('*')

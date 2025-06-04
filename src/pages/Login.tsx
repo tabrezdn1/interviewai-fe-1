@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MessageSquare, Github, Mail, EyeOff, Eye } from 'lucide-react';
+import { MessageSquare, Github, Mail } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
@@ -13,6 +13,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMode, setFormMode] = useState<'oauth' | 'email'>('oauth');
+  const [isRedirecting, setIsRedirecting] = useState(false);
   
   const { login, signUp, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
@@ -23,6 +24,11 @@ const Login: React.FC = () => {
     const params = new URLSearchParams(location.search);
     if (params.get('signup') === 'true') {
       setIsSignUp(true);
+    }
+    
+    // Check if we're returning from an OAuth redirect
+    if (location.hash && (location.hash.includes('access_token') || location.hash.includes('error'))) {
+      setIsRedirecting(true);
     }
   }, [location]);
   
@@ -37,11 +43,13 @@ const Login: React.FC = () => {
     try {
       setError(null);
       setIsSubmitting(true);
+      setIsRedirecting(true);
       await login(provider);
-      // Note: We don't navigate here because OAuth will redirect the page
+      // Note: The page will redirect, so we don't need to navigate here
     } catch (error) {
       console.error('Login failed:', error);
       setError('Authentication failed. Please try again.');
+      setIsRedirecting(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -75,10 +83,18 @@ const Login: React.FC = () => {
     }
   };
   
-  if (loading) {
+  if (loading || isRedirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4 mx-auto"></div>
+          <h3 className="text-lg font-medium mb-2">
+            {isRedirecting ? 'Redirecting to authenticate...' : 'Loading...'}
+          </h3>
+          <p className="text-muted-foreground">
+            {isRedirecting ? 'Please wait while we connect to your account.' : 'Please wait...'}
+          </p>
+        </div>
       </div>
     );
   }
