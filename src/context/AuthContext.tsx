@@ -208,20 +208,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           await handleSession(data.session);
         }
       } else if (['google', 'github'].includes(provider)) {
-        // For OAuth providers, we need to use signInWithOAuth
         const providerEnum = provider as Provider;
-        
-        // Get the current URL's origin for the redirect URL
-        const origin = window.location.origin;
-        const redirectTo = `${origin}/auth/callback`;
-        
-        console.log(`OAuth login with ${provider}, redirect URL: ${redirectTo}`);
         
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: providerEnum,
           options: {
-            redirectTo: redirectTo,
-            skipBrowserRedirect: false // Make sure this is false to allow redirect
+            redirectTo: `${window.location.origin}`
           }
         });
         
@@ -229,10 +221,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           console.error('OAuth sign in error:', error);
           throw error;
         }
-        
-        console.log("OAuth redirect initiated:", data);
-        
-        // The browser will be redirected to the OAuth provider, so we don't need to do anything else here
       } else {
         throw new Error('Invalid login method');
       }
