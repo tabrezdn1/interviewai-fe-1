@@ -19,16 +19,16 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Check if the URL has signup parameter
+  // Check if the URL has signup parameter or error
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('signup') === 'true') {
       setIsSignUp(true);
     }
     
-    // Check if we're returning from an OAuth redirect
-    if (location.hash && (location.hash.includes('access_token') || location.hash.includes('error'))) {
-      setIsRedirecting(true);
+    const error = params.get('error');
+    if (error) {
+      setError(decodeURIComponent(error));
     }
   }, [location]);
   
@@ -44,13 +44,15 @@ const Login: React.FC = () => {
       setError(null);
       setIsSubmitting(true);
       setIsRedirecting(true);
+      
+      // Initiate OAuth login
       await login(provider);
-      // Note: The page will redirect, so we don't need to navigate here
+      
+      // Note: The page will redirect, so we don't need to navigate programmatically
     } catch (error) {
       console.error('Login failed:', error);
       setError('Authentication failed. Please try again.');
       setIsRedirecting(false);
-    } finally {
       setIsSubmitting(false);
     }
   };

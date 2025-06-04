@@ -10,6 +10,7 @@ import InterviewSession from './pages/InterviewSession';
 import FeedbackAnalysis from './pages/FeedbackAnalysis';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
+import AuthCallback from './pages/AuthCallback';
 
 // Components
 import Navbar from './components/layout/Navbar';
@@ -32,6 +33,7 @@ function App() {
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route 
                   path="/dashboard" 
                   element={
