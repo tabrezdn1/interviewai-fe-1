@@ -12,7 +12,8 @@ export interface UserProfile {
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
-  login: (provider: string) => Promise<void>;
+  login: (provider: string, credentials?: { email: string; password: string }) => Promise<void>;
+  signUp: (credentials: { email: string; password: string; name: string }) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -22,6 +23,7 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   login: async () => {},
+  signUp: async () => {},
   logout: async () => {},
   isAuthenticated: false,
 });
@@ -124,21 +126,68 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const login = async (provider: string): Promise<void> => {
+  const signUp = async (credentials: { email: string; password: string; name: string }): Promise<void> => {
     setLoading(true);
     
     try {
-      if (provider === 'email') {
-        // Use magic link/password auth in a real app
-        // For now, we'll mock with the old mock user
+      const { data, error } = await supabase.auth.signUp({
+        email: credentials.email,
+        password: credentials.password,
+        options: {
+          data: {
+            full_name: credentials.name,
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data.user) {
+        // Create profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            { 
+              id: data.user.id,
+              name: credentials.name,
+              avatar_url: null,
+            }
+          ]);
+        
+        if (profileError) throw profileError;
+        
+        // Auto-login
+        if (data.session) {
+          await handleSession(data.session);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error signing up:', error);
+      throw new Error(error.error_description || error.message || 'Error during sign up');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (
+    provider: string,
+    credentials?: { email: string; password: string }
+  ): Promise<void> => {
+    setLoading(true);
+    
+    try {
+      if (provider === 'email' && credentials) {
         const { data, error } = await supabase.auth.signInWithPassword({
-          email: 'demo@example.com',
-          password: 'password123', // In a real app this would come from a form
+          email: credentials.email,
+          password: credentials.password,
         });
         
         if (error) throw error;
         
-      } else if (['google', 'github', 'linkedin'].includes(provider)) {
+        if (data.session) {
+          await handleSession(data.session);
+        }
+      } else if (['google', 'github'].includes(provider)) {
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: provider as 'google' | 'github',
           options: {
@@ -147,9 +196,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         });
         
         if (error) throw error;
+        
+        // Note: For OAuth, we don't set user here because it will be handled by the auth state change
+        // after redirect back from the OAuth provider
+      } else {
+        throw new Error('Invalid login method');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error logging in:', error);
+      throw new Error(error.error_description || error.message || 'Error during sign in');
     } finally {
       setLoading(false);
     }
@@ -169,6 +224,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     loading,
     login,
+    signUp,
     logout,
     isAuthenticated: !!user,
   };
