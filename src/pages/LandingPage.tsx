@@ -1,7 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Video, MessageSquare, BarChart2, Brain, Check, ArrowRight, ExternalLink, Star } from 'lucide-react';
+import { 
+  Video, MessageSquare, BarChart2, Brain, Check, ArrowRight, 
+  ExternalLink, Star, Sparkles, ArrowUpRight, Code, Lightbulb, 
+  BookOpen, Compass, Award, Users, Clock, Laptop, User, CalendarDays 
+} from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { cn } from '../lib/utils';
 import { testimonials, siteStats } from '../data/testimonials';
@@ -11,9 +15,9 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="min-h-screen flex items-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-900 to-accent-900 z-0"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-900 to-accent dark:from-gray-950 dark:to-gray-900 z-0"></div>
         <div 
-          className="absolute inset-0 opacity-20 z-0"
+          className="absolute inset-0 opacity-10 z-0"
           style={{
             backgroundImage: "url('https://images.pexels.com/photos/3184302/pexels-photo-3184302.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')",
             backgroundSize: 'cover',
@@ -47,7 +51,7 @@ const LandingPage: React.FC = () => {
           ))}
         </div>
         
-        <div className="container-custom mx-auto relative z-10 pt-24 pb-16">
+        <div className="container-custom mx-auto relative z-10 pt-32 pb-16">
           <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
             <div className="md:w-1/2">
               <motion.div
@@ -56,19 +60,13 @@ const LandingPage: React.FC = () => {
                 transition={{ duration: 0.5 }}
               >
                 <div className="mb-6 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-white/90 text-sm">
-                  <Star className="h-4 w-4 text-yellow-300" />
+                  <Sparkles className="h-4 w-4 text-yellow-300" />
                   <span>AI-powered interviews for the modern job seeker</span>
                 </div>
                 
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-                  <span className="relative">
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight font-heading">
+                  <span className="heading-highlight">
                     Master Your Interviews
-                    <motion.span 
-                      className="absolute -bottom-2 left-0 w-full h-1 bg-accent-500 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: "100%" }}
-                      transition={{ delay: 0.5, duration: 0.8 }}
-                    />
                   </span>
                   {" "}with AI-Powered Practice
                 </h1>
@@ -76,7 +74,7 @@ const LandingPage: React.FC = () => {
                   Prepare for your next job interview with realistic AI simulations, personalized feedback, and expert coaching.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Button asChild variant="white" size="lg" className="group font-semibold">
+                  <Button asChild size="lg" className="group font-semibold bg-white text-primary hover:bg-white/90">
                     <Link to="/login?signup=true">
                       Get Started Free
                       <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -92,7 +90,7 @@ const LandingPage: React.FC = () => {
                 <div className="mt-10 flex items-center gap-3">
                   <div className="flex -space-x-2">
                     {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="w-8 h-8 rounded-full border-2 border-primary-900 overflow-hidden">
+                      <div key={i} className="w-8 h-8 rounded-full border-2 border-primary-900 dark:border-gray-900 overflow-hidden">
                         <img 
                           src={`https://randomuser.me/api/portraits/${i % 2 ? 'women' : 'men'}/${20 + i}.jpg`} 
                           alt="User avatar" 
@@ -116,7 +114,7 @@ const LandingPage: React.FC = () => {
                 className="relative"
               >
                 {/* Glow effect behind the image */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-primary-500/20 to-accent-500/20 rounded-xl blur-xl"></div>
+                <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-accent/20 rounded-xl blur-xl"></div>
                 
                 <div className="relative rounded-xl overflow-hidden shadow-2xl border border-white/10 backdrop-blur-sm">
                   <img 
@@ -132,13 +130,13 @@ const LandingPage: React.FC = () => {
                     transition={{ delay: 0.5, duration: 0.5 }}
                     className="absolute -right-6 top-10"
                   >
-                    <div className="bg-white rounded-lg shadow-lg p-3 flex items-center gap-2 transform rotate-3">
-                      <div className="w-8 h-8 bg-success-100 rounded-full flex items-center justify-center">
-                        <Check className="h-5 w-5 text-success-600" />
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 flex items-center gap-2 transform rotate-3">
+                      <div className="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                        <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Great Response!</p>
-                        <p className="text-xs text-gray-500">Confidence score 92%</p>
+                        <p className="text-sm font-medium dark:text-white">Great Response!</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Confidence score 92%</p>
                       </div>
                     </div>
                   </motion.div>
@@ -149,8 +147,8 @@ const LandingPage: React.FC = () => {
                     transition={{ delay: 0.7, duration: 0.5 }}
                     className="absolute -left-6 bottom-10"
                   >
-                    <div className="bg-white rounded-lg shadow-lg p-3 transform -rotate-3">
-                      <p className="text-sm font-medium">AI-Generated Feedback</p>
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 transform -rotate-3">
+                      <p className="text-sm font-medium dark:text-white">AI-Generated Feedback</p>
                       <div className="flex items-center gap-1 mt-1">
                         {[1, 2, 3, 4, 5].map((i) => (
                           <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />
@@ -163,11 +161,34 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-0 right-0 flex justify-center">
+          <a 
+            href="#features" 
+            className="flex flex-col items-center text-white/80 hover:text-white transition-colors"
+          >
+            <span className="text-sm mb-2">Scroll to learn more</span>
+            <motion.div 
+              className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center p-1"
+              initial={{ y: 0 }}
+              animate={{ y: [0, 5, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <motion.div 
+                className="w-1 h-2 bg-white rounded-full"
+                initial={{ y: 0 }}
+                animate={{ y: [0, 8, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </motion.div>
+          </a>
+        </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 bg-gray-50">
-        <div className="container-custom mx-auto">
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-4">
           <motion.div 
             className="grid grid-cols-2 md:grid-cols-4 gap-8"
             variants={{
@@ -191,64 +212,64 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-white">
-        <div className="container-custom mx-auto">
-          <div className="text-center mb-16">
+      <section id="features" className="py-32 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-20">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 text-primary-700 text-sm mb-4">
-                <Star className="h-4 w-4 fill-primary-500 text-primary-500" />
-                <span className="font-medium">Powerful Features</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-950/50 text-primary-800 dark:text-primary-300 text-sm font-medium mb-4">
+                <Sparkles className="h-4 w-4" />
+                <span>Powerful Features</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need to Succeed</h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Our platform provides all the tools you need to prepare for your next interview.
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-heading">Everything You Need to Succeed</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Our platform provides all the tools you need to prepare for your next interview and land your dream job.
               </p>
             </motion.div>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
             <FeatureCard 
-              icon={<Video className="h-8 w-8 text-primary-600" />}
+              icon={<Video className="h-8 w-8 text-primary" />}
               title="Realistic AI Interviews"
               description="Experience authentic interview scenarios with our AI-powered video and voice simulations."
               delay={0}
             />
             
             <FeatureCard 
-              icon={<Brain className="h-8 w-8 text-primary-600" />}
+              icon={<Brain className="h-8 w-8 text-primary" />}
               title="Industry-Specific Questions"
               description="Practice with questions tailored to your industry, role, and experience level."
               delay={0.1}
             />
             
             <FeatureCard 
-              icon={<MessageSquare className="h-8 w-8 text-primary-600" />}
+              icon={<MessageSquare className="h-8 w-8 text-primary" />}
               title="Real-time Feedback"
               description="Get instant feedback on your responses, body language, and presentation style."
               delay={0.2}
             />
             
             <FeatureCard 
-              icon={<BarChart2 className="h-8 w-8 text-primary-600" />}
+              icon={<BarChart2 className="h-8 w-8 text-primary" />}
               title="Performance Analytics"
               description="Track your progress over time with detailed performance metrics and insights."
               delay={0.3}
             />
             
             <FeatureCard 
-              icon={<Check className="h-8 w-8 text-primary-600" />}
+              icon={<CalendarDays className="h-8 w-8 text-primary" />}
               title="Customizable Sessions"
               description="Create interview sessions tailored to specific job roles, companies, or skill sets."
               delay={0.4}
             />
             
             <FeatureCard 
-              icon={<Check className="h-8 w-8 text-primary-600" />}
+              icon={<Lightbulb className="h-8 w-8 text-primary" />}
               title="Expert Coaching"
               description="Access professional interview coaching and personalized improvement plans."
               delay={0.5}
@@ -258,26 +279,38 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-gray-50">
-        <div className="container-custom mx-auto">
-          <div className="text-center mb-16">
+      <section className="py-32 bg-background relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent"></div>
+          <div className="grid grid-cols-12 h-full w-full">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="h-full border-r border-gray-200 dark:border-gray-800 last:border-r-0"></div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="text-center mb-20">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary-50 text-secondary-700 text-sm mb-4">
-                <span className="font-medium">Simple Process</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 text-secondary text-sm font-medium mb-4">
+                <Compass className="h-4 w-4" />
+                <span>Simple Process</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-heading">How It Works</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Prepare for your next interview in three simple steps
               </p>
             </motion.div>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-12 max-w-5xl mx-auto">
             <ProcessCard 
               number="01" 
               title="Set Up Your Interview" 
@@ -298,20 +331,21 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 bg-white">
-        <div className="container-custom mx-auto">
-          <div className="text-center mb-16">
+      <section className="py-32 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-20">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-50 text-accent-700 text-sm mb-4">
-                <span className="font-medium">Success Stories</span>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
+                <Users className="h-4 w-4" />
+                <span>Success Stories</span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">What Our Users Say</h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-heading">What Our Users Say</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Join thousands who have improved their interview skills and landed their dream jobs
               </p>
             </motion.div>
@@ -332,8 +366,8 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container-custom mx-auto">
+      <section className="py-32 bg-background">
+        <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -341,7 +375,7 @@ const LandingPage: React.FC = () => {
             transition={{ duration: 0.5 }}
             className="relative overflow-hidden rounded-3xl"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-accent-600 z-0"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent z-0"></div>
             <div className="absolute inset-0 z-0 overflow-hidden">
               {Array.from({ length: 20 }).map((_, i) => (
                 <div 
@@ -352,23 +386,22 @@ const LandingPage: React.FC = () => {
                     height: Math.random() * 100 + 50,
                     top: `${Math.random() * 100}%`,
                     left: `${Math.random() * 100}%`,
-                    animationDelay: `${Math.random() * 2}s`,
                   }}
                 ></div>
               ))}
             </div>
             
-            <div className="relative z-10 p-8 md:p-12">
+            <div className="relative z-10 p-8 md:p-12 lg:p-16">
               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                 <div>
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4 font-heading">
                     Ready to Ace Your Next Interview?
                   </h2>
                   <p className="text-white/90 text-lg mb-8 md:mb-0 max-w-xl">
                     Join thousands of job seekers who have improved their interview skills and landed their dream jobs.
                   </p>
                 </div>
-                <Button asChild variant="white" size="lg" className="group whitespace-nowrap font-semibold">
+                <Button asChild size="lg" className="group whitespace-nowrap font-semibold bg-white text-primary hover:bg-white/90">
                   <Link to="/login?signup=true">
                     Get Started Free
                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -381,35 +414,35 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
-        <div className="container-custom mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
+      <footer className="bg-muted/30 pt-20 pb-10">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-16">
             <div className="col-span-1 md:col-span-2">
               <Link to="/" className="text-2xl font-bold flex items-center gap-2 mb-4">
-                <MessageSquare className="h-6 w-6 text-primary-400" />
+                <MessageSquare className="h-6 w-6 text-primary" />
                 <span>InterviewAI</span>
               </Link>
-              <p className="text-gray-400 mb-6 max-w-md">
+              <p className="text-muted-foreground mb-6 max-w-md">
                 InterviewAI helps job seekers prepare for interviews with AI-powered simulations, personalized feedback, and expert coaching.
               </p>
               <div className="flex gap-4">
-                <a href="#" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors">
+                <a href="#" className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors">
                   <span className="sr-only">Twitter</span>
-                  <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-1-4.8 4-8.5 8-5 1.6 1.5 2 2 2 2z"></path>
                   </svg>
                 </a>
-                <a href="#" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors">
+                <a href="#" className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors">
                   <span className="sr-only">LinkedIn</span>
-                  <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"></path>
                     <rect x="2" y="9" width="4" height="12"></rect>
                     <circle cx="4" cy="4" r="2"></circle>
                   </svg>
                 </a>
-                <a href="#" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors">
+                <a href="#" className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-primary/10 transition-colors">
                   <span className="sr-only">GitHub</span>
-                  <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"></path>
                   </svg>
                 </a>
@@ -417,32 +450,32 @@ const LandingPage: React.FC = () => {
             </div>
             
             <div>
-              <h3 className="font-medium text-lg mb-4 text-white/80">Product</h3>
+              <h3 className="font-medium text-lg mb-4">Product</h3>
               <ul className="space-y-3">
-                <li><a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Testimonials</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">FAQ</a></li>
+                <li><a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Testimonials</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</a></li>
               </ul>
             </div>
             
             <div>
-              <h3 className="font-medium text-lg mb-4 text-white/80">Company</h3>
+              <h3 className="font-medium text-lg mb-4">Company</h3>
               <ul className="space-y-3">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">About</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Careers</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Contact</a></li>
+                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Blog</a></li>
               </ul>
             </div>
           </div>
           
-          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-500 mb-4 md:mb-0">© 2025 InterviewAI. All rights reserved.</p>
+          <div className="border-t border-border pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-muted-foreground mb-4 md:mb-0">© 2025 InterviewAI. All rights reserved.</p>
             <div className="flex gap-6">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Privacy Policy</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Terms of Service</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Cookies</a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm">Privacy Policy</a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm">Terms of Service</a>
+              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm">Cookies</a>
             </div>
           </div>
         </div>
@@ -463,10 +496,10 @@ const StatCard: React.FC<StatCardProps> = ({ number, label }) => {
         hidden: { opacity: 0, y: 20 },
         show: { opacity: 1, y: 0 }
       }}
-      className="bg-white rounded-xl p-6 shadow-md border border-gray-100"
+      className="bg-card rounded-xl p-6 shadow-sm border"
     >
-      <p className="text-3xl md:text-4xl font-bold text-gray-900 mb-1">{number}</p>
-      <p className="text-gray-600">{label}</p>
+      <p className="text-3xl md:text-4xl font-bold text-foreground mb-1">{number}</p>
+      <p className="text-muted-foreground">{label}</p>
     </motion.div>
   );
 };
@@ -487,17 +520,17 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, del
       transition={{ duration: 0.5, delay }}
       className="group"
     >
-      <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 h-full flex flex-col relative overflow-hidden">
+      <div className="bg-card border rounded-xl p-8 shadow-sm hover:shadow-md transition-all duration-300 h-full flex flex-col relative overflow-hidden">
         {/* Accent border that appears on hover */}
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary-600 to-accent-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-accent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
         
-        <div className="w-12 h-12 rounded-lg bg-primary-50 flex items-center justify-center mb-4 group-hover:bg-primary-100 transition-colors">
+        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
           {icon}
         </div>
-        <h3 className="text-xl font-semibold mb-3 group-hover:text-primary-600 transition-colors">{title}</h3>
-        <p className="text-gray-600 mb-4">{description}</p>
+        <h3 className="text-xl font-semibold mb-3 group-hover:text-primary transition-colors">{title}</h3>
+        <p className="text-muted-foreground mb-4">{description}</p>
         <div className="mt-auto pt-4">
-          <a href="#" className="text-primary-600 font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+          <a href="#" className="text-primary font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
             Learn more <ArrowRight className="h-4 w-4" />
           </a>
         </div>
@@ -522,18 +555,18 @@ const ProcessCard: React.FC<ProcessCardProps> = ({ number, title, description })
       className="relative"
     >
       {/* Connection line */}
-      <div className="hidden md:block absolute top-10 left-1/2 w-full h-1 bg-gray-200 -z-10"></div>
+      <div className="hidden md:block absolute top-10 left-1/2 w-full h-1 bg-muted -z-10"></div>
       
       <div className="flex flex-col items-center text-center">
         <div className="relative mb-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-xl font-bold">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xl font-bold">
             {number}
           </div>
           {/* Animated pulse effect */}
-          <div className="absolute inset-0 rounded-full bg-primary-500/20 animate-pulse-slow"></div>
+          <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse-slow"></div>
         </div>
         <h3 className="text-xl font-semibold mb-2">{title}</h3>
-        <p className="text-gray-600">{description}</p>
+        <p className="text-muted-foreground">{description}</p>
       </div>
     </motion.div>
   );
@@ -553,19 +586,19 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({ quote, name, title, i
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="bg-white rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-lg transition-all"
+      className="bg-card rounded-xl p-6 shadow-sm border hover:shadow-md transition-all"
     >
       <div className="flex items-center gap-1 mb-4">
         {[1, 2, 3, 4, 5].map(i => (
           <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />
         ))}
       </div>
-      <p className="text-gray-700 mb-6 italic">"{quote}"</p>
+      <p className="text-muted-foreground mb-6 italic">"{quote}"</p>
       <div className="flex items-center gap-3">
         <img src={image} alt={name} className="w-10 h-10 rounded-full object-cover" />
         <div>
           <p className="font-medium">{name}</p>
-          <p className="text-sm text-gray-600">{title}</p>
+          <p className="text-sm text-muted-foreground">{title}</p>
         </div>
       </div>
     </motion.div>
