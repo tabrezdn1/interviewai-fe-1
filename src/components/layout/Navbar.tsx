@@ -304,5 +304,3 @@ const MobileNavLink: React.FC<MobileNavLinkProps> = ({ to, label, onClick }) => 
 };
 
 export default Navbar;
-
-export default Navbar
