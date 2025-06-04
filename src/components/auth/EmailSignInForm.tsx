@@ -47,7 +47,7 @@ const EmailSignInForm: React.FC<EmailSignInFormProps> = ({ onSubmit, isLoading, 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="email" className="block text-sm font-medium mb-1">
           Email Address
         </label>
         <input
@@ -55,17 +55,17 @@ const EmailSignInForm: React.FC<EmailSignInFormProps> = ({ onSubmit, isLoading, 
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-            errors.email ? 'border-red-300 bg-red-50' : 'border-gray-300'
+          className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:border-gray-700 ${
+            errors.email ? 'border-red-300 bg-red-50 dark:bg-red-950/50' : 'border-input bg-background'
           }`}
           placeholder="you@example.com"
           required
         />
-        {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+        {errors.email && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.email}</p>}
       </div>
       
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="password" className="block text-sm font-medium mb-1">
           Password
         </label>
         <div className="relative">
@@ -74,8 +74,8 @@ const EmailSignInForm: React.FC<EmailSignInFormProps> = ({ onSubmit, isLoading, 
             type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10 ${
-              errors.password ? 'border-red-300 bg-red-50' : 'border-gray-300'
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-10 dark:bg-gray-800 dark:border-gray-700 ${
+              errors.password ? 'border-red-300 bg-red-50 dark:bg-red-950/50' : 'border-input bg-background'
             }`}
             placeholder="••••••••"
             required
@@ -83,12 +83,12 @@ const EmailSignInForm: React.FC<EmailSignInFormProps> = ({ onSubmit, isLoading, 
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
-        {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
+        {errors.password && <p className="mt-1 text-xs text-red-500 dark:text-red-400">{errors.password}</p>}
       </div>
       
       <div className="flex flex-col gap-3">
@@ -99,7 +99,7 @@ const EmailSignInForm: React.FC<EmailSignInFormProps> = ({ onSubmit, isLoading, 
         >
           {isLoading ? (
             <div className="flex items-center justify-center gap-2">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
               <span>Signing in...</span>
             </div>
           ) : 'Sign in'}

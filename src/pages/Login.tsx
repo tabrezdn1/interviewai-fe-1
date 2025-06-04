@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MessageSquare, Github, Linkedin, Mail, EyeOff, Eye } from 'lucide-react';
+import { MessageSquare, Github, Mail, EyeOff, Eye } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
+import EmailSignInForm from '../components/auth/EmailSignInForm';
+import EmailSignUpForm from '../components/auth/EmailSignUpForm';
 
 const Login: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formMode, setFormMode] = useState<'oauth' | 'email'>('oauth');
@@ -38,61 +36,66 @@ const Login: React.FC = () => {
   const handleOAuthLogin = async (provider: string) => {
     try {
       setError(null);
+      setIsSubmitting(true);
       await login(provider);
+      // Note: We don't navigate here because OAuth will redirect the page
     } catch (error) {
       console.error('Login failed:', error);
       setError('Authentication failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const handleEmailSignIn = async (data: { email: string; password: string }) => {
     setError(null);
-    
+    setIsSubmitting(true);
     try {
-      if (isSignUp) {
-        if (!name) {
-          throw new Error('Please enter your name');
-        }
-        await signUp({ email, password, name });
-      } else {
-        await login('email', { email, password });
-      }
+      await login('email', data);
       navigate('/dashboard');
     } catch (error: any) {
-      console.error('Authentication failed:', error);
+      console.error('Sign in failed:', error);
       setError(error.message || 'Authentication failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
   
-  const validateForm = () => {
-    return email.includes('@') && password.length >= 6 && (!isSignUp || name.length >= 2);
+  const handleEmailSignUp = async (data: { email: string; password: string; name: string }) => {
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      await signUp(data);
+      navigate('/dashboard');
+    } catch (error: any) {
+      console.error('Sign up failed:', error);
+      setError(error.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
   
   return (
-    <div className="min-h-screen pt-24 bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen pt-24 bg-muted/30 flex items-center justify-center px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="w-full max-w-md"
       >
-        <Card>
+        <Card className="border shadow-md">
           <CardHeader className="text-center space-y-1">
             <div className="flex justify-center mb-4">
-              <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-                <MessageSquare className="h-6 w-6 text-primary-600" />
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <MessageSquare className="h-6 w-6 text-primary" />
               </div>
             </div>
             <CardTitle className="text-2xl font-bold">
@@ -107,7 +110,7 @@ const Login: React.FC = () => {
           
           <CardContent>
             {error && (
-              <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-200">
+              <div className="mb-4 p-3 bg-destructive/10 text-destructive text-sm rounded-lg border border-destructive/20">
                 {error}
               </div>
             )}
@@ -118,6 +121,7 @@ const Login: React.FC = () => {
                   onClick={() => handleOAuthLogin('google')}
                   variant="outline"
                   className="w-full justify-center gap-3"
+                  disabled={isSubmitting}
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path
@@ -137,24 +141,25 @@ const Login: React.FC = () => {
                       fill="#EA4335"
                     />
                   </svg>
-                  Continue with Google
+                  {isSubmitting ? 'Connecting...' : 'Continue with Google'}
                 </Button>
                 
                 <Button
                   onClick={() => handleOAuthLogin('github')}
                   variant="outline"
-                  className="w-full justify-center gap-3 bg-gray-900 text-white hover:bg-gray-800 border-gray-900"
+                  className="w-full justify-center gap-3 bg-gray-900 text-white hover:bg-gray-800 border-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-700"
+                  disabled={isSubmitting}
                 >
                   <Github className="h-5 w-5" />
-                  Continue with GitHub
+                  {isSubmitting ? 'Connecting...' : 'Continue with GitHub'}
                 </Button>
                 
                 <div className="relative py-3">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-300"></div>
+                    <div className="w-full border-t border-border"></div>
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="bg-white px-4 text-sm text-gray-500">Or continue with</span>
+                    <span className="bg-card px-4 text-sm text-muted-foreground">Or continue with</span>
                   </div>
                 </div>
                 
@@ -168,98 +173,30 @@ const Login: React.FC = () => {
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleEmailAuth} className="space-y-4">
-                {isSignUp && (
-                  <div>
-                    <label htmlFor="name\" className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name
-                    </label>
-                    <input
-                      id="name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Your name"
-                      required
-                    />
-                  </div>
-                )}
-                
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="you@example.com"
-                    required
+              <>
+                {isSignUp ? (
+                  <EmailSignUpForm 
+                    onSubmit={handleEmailSignUp}
+                    isLoading={isSubmitting}
+                    onCancel={() => setFormMode('oauth')}
                   />
-                </div>
-                
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
-                      placeholder="••••••••"
-                      required
-                      minLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                    >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                  <p className="mt-1 text-xs text-gray-500">
-                    Password must be at least 6 characters long
-                  </p>
-                </div>
-                
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isSubmitting || !validateForm()}
-                >
-                  {isSubmitting ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                      <span>Processing...</span>
-                    </div>
-                  ) : isSignUp ? 'Sign up' : 'Sign in'}
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setFormMode('oauth')}
-                >
-                  Back to other options
-                </Button>
-              </form>
+                ) : (
+                  <EmailSignInForm 
+                    onSubmit={handleEmailSignIn}
+                    isLoading={isSubmitting}
+                    onCancel={() => setFormMode('oauth')}
+                  />
+                )}
+              </>
             )}
           </CardContent>
           
           <CardFooter className="flex flex-col">
-            <p className="text-center text-sm text-gray-600">
+            <p className="text-center text-sm text-muted-foreground">
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
                 onClick={() => setIsSignUp(!isSignUp)}
-                className="text-primary-600 font-medium hover:text-primary-700"
+                className="text-primary font-medium hover:text-primary/90"
               >
                 {isSignUp ? 'Sign in' : 'Sign up'}
               </button>

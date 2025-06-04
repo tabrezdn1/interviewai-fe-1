@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import { Session, User, Provider } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 
 export interface UserProfile {
@@ -52,6 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Listen for auth state changes
         const { data: { subscription } } = await supabase.auth.onAuthStateChange(
           async (event, session) => {
+            console.log("Auth state change:", event, session);
             if (session) {
               await handleSession(session);
             } else {
@@ -78,6 +79,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     if (!supabaseUser) return;
     
+    console.log("Handling session for user:", supabaseUser);
+    
     // Get profile data
     try {
       const { data: profile, error } = await supabase
@@ -88,14 +91,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // If profile doesn't exist, create it
       if (error || !profile) {
+        console.log("Creating new profile for user:", supabaseUser);
         // Create new profile using user data from auth
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
           .insert([
             { 
               id: supabaseUser.id,
-              name: supabaseUser.user_metadata.full_name || supabaseUser.email?.split('@')[0] || 'User',
-              avatar_url: supabaseUser.user_metadata.avatar_url || null,
+              name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
+              avatar_url: supabaseUser.user_metadata?.avatar_url || null,
             }
           ])
           .select('*')
@@ -136,7 +140,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         options: {
           data: {
             full_name: credentials.name,
-          }
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`
         }
       });
       
@@ -151,6 +156,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               id: data.user.id,
               name: credentials.name,
               avatar_url: null,
+              email_confirmed: false
             }
           ]);
         
@@ -188,17 +194,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           await handleSession(data.session);
         }
       } else if (['google', 'github'].includes(provider)) {
+        // For OAuth providers, we need to use signInWithOAuth
+        const providerEnum = provider as Provider;
+        
         const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: provider as 'google' | 'github',
+          provider: providerEnum,
           options: {
             redirectTo: `${window.location.origin}/dashboard`,
-          },
+            queryParams: {
+              // Optional additional parameters
+              prompt: 'select_account', // Force account selection (Google)
+            }
+          }
         });
         
         if (error) throw error;
         
-        // Note: For OAuth, we don't set user here because it will be handled by the auth state change
+        // For OAuth, we don't set user here because it will be handled by the auth state change
         // after redirect back from the OAuth provider
+        console.log("OAuth redirect initiated:", data);
       } else {
         throw new Error('Invalid login method');
       }
@@ -215,6 +229,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
+      // Redirect to home page after logout
+      window.location.href = '/';
     } catch (error) {
       console.error('Error logging out:', error);
     }

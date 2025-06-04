@@ -15,10 +15,12 @@ try {
     // Create a dummy client that will show appropriate errors
     supabase = {
       auth: {
-        signIn: () => Promise.reject(new Error('Supabase not configured')),
+        signInWithPassword: () => Promise.reject(new Error('Supabase not configured')),
+        signInWithOAuth: () => Promise.reject(new Error('Supabase not configured')),
         signUp: () => Promise.reject(new Error('Supabase not configured')),
         signOut: () => Promise.reject(new Error('Supabase not configured')),
-        onAuthStateChange: () => ({ data: null, error: new Error('Supabase not configured') }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } }, error: new Error('Supabase not configured') }),
+        getSession: () => Promise.resolve({ data: { session: null }, error: new Error('Supabase not configured') }),
       },
       from: () => ({
         select: () => ({ data: null, error: new Error('Supabase not configured') }),
@@ -26,20 +28,36 @@ try {
         update: () => ({ data: null, error: new Error('Supabase not configured') }),
         delete: () => ({ data: null, error: new Error('Supabase not configured') }),
       }),
+      storage: {
+        from: () => ({
+          upload: () => ({ data: null, error: new Error('Supabase not configured') }),
+          getPublicUrl: () => ({ data: { publicUrl: '' }, error: null }),
+        }),
+      },
     };
   } else {
-    // Create actual Supabase client
-    supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+    // Create actual Supabase client with options for cookie-based sessions
+    supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        storageKey: 'interview-ai-auth',
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        flowType: 'implicit',
+      }
+    });
   }
 } catch (error) {
   console.error('Error initializing Supabase client:', error);
   // Fallback to dummy client
   supabase = {
     auth: {
-      signIn: () => Promise.reject(new Error('Supabase client initialization failed')),
+      signInWithPassword: () => Promise.reject(new Error('Supabase client initialization failed')),
+      signInWithOAuth: () => Promise.reject(new Error('Supabase client initialization failed')),
       signUp: () => Promise.reject(new Error('Supabase client initialization failed')),
       signOut: () => Promise.reject(new Error('Supabase client initialization failed')),
-      onAuthStateChange: () => ({ data: null, error: new Error('Supabase client initialization failed') }),
+      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } }, error: new Error('Supabase client initialization failed') }),
+      getSession: () => Promise.resolve({ data: { session: null }, error: new Error('Supabase client initialization failed') }),
     },
     from: () => ({
       select: () => ({ data: null, error: new Error('Supabase client initialization failed') }),
@@ -47,6 +65,12 @@ try {
       update: () => ({ data: null, error: new Error('Supabase client initialization failed') }),
       delete: () => ({ data: null, error: new Error('Supabase client initialization failed') }),
     }),
+    storage: {
+      from: () => ({
+        upload: () => ({ data: null, error: new Error('Supabase client initialization failed') }),
+        getPublicUrl: () => ({ data: { publicUrl: '' }, error: null }),
+      }),
+    },
   };
 }
 
