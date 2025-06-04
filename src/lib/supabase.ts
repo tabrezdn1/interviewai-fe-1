@@ -36,17 +36,40 @@ try {
       },
     };
   } else {
-    // Create actual Supabase client with proper OAuth configuration
+    // Create actual Supabase client with enhanced cookie storage for better compatibility
     supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
+        storageKey: 'interview-ai-auth',
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        flowType: 'pkce' // Use PKCE for better security with OAuth
+        // Use localStorage and cookies for best compatibility
+        storage: {
+          getItem: (key) => {
+            try {
+              return localStorage.getItem(key);
+            } catch (error) {
+              console.error('Error getting auth from localStorage:', error);
+              return null;
+            }
+          },
+          setItem: (key, value) => {
+            try {
+              localStorage.setItem(key, value);
+            } catch (error) {
+              console.error('Error setting auth in localStorage:', error);
+            }
+          },
+          removeItem: (key) => {
+            try {
+              localStorage.removeItem(key);
+            } catch (error) {
+              console.error('Error removing auth from localStorage:', error);
+            }
+          }
+        }
       }
     });
-    
-    console.log('Supabase client initialized with URL:', supabaseUrl);
   }
 } catch (error) {
   console.error('Error initializing Supabase client:', error);

@@ -92,20 +92,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // If profile doesn't exist, create it
       if (error || !profile) {
         console.log("Creating new profile for user:", supabaseUser);
-        
-        const name = supabaseUser.user_metadata?.name || 
-                     supabaseUser.user_metadata?.full_name || 
-                     supabaseUser.user_metadata?.user_name ||
-                     supabaseUser.email?.split('@')[0] || 
-                     'User';
-        
         // Create new profile using user data from auth
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
           .insert([
             { 
               id: supabaseUser.id,
-              name: name,
+              name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || 'User',
               avatar_url: supabaseUser.user_metadata?.avatar_url || null,
               email_confirmed: false
             }
@@ -149,7 +142,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           data: {
             full_name: credentials.name,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`
+          emailRedirectTo: `${window.location.origin}/dashboard`
         }
       });
       
@@ -205,28 +198,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // For OAuth providers, we need to use signInWithOAuth
         const providerEnum = provider as Provider;
         
-        // Determine the absolute URL for the redirect
-        const redirectUrl = new URL('/auth/callback', window.location.origin).toString();
-        console.log('OAuth redirect URL:', redirectUrl);
-        
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: providerEnum,
           options: {
-            redirectTo: redirectUrl,
-            skipBrowserRedirect: false
+            redirectTo: `${window.location.origin}/dashboard`,
+            queryParams: {
+              // Optional additional parameters
+              prompt: 'select_account', // Force account selection (Google)
+            }
           }
         });
         
-        if (error) {
-          console.error('OAuth sign in error:', error);
-          throw error;
-        }
+        if (error) throw error;
         
         // For OAuth, we don't set user here because it will be handled by the auth state change
         // after redirect back from the OAuth provider
         console.log("OAuth redirect initiated:", data);
-        
-        // The browser will be redirected to the OAuth provider, so we don't need to do anything else here
       } else {
         throw new Error('Invalid login method');
       }
