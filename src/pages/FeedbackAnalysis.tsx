@@ -8,26 +8,73 @@ import {
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { mockFeedback, getScoreColor, getScoreTextColor, getScoreBackgroundColor, getScoreRating, nextStepsRecommendations } from '../data/feedback';
+import { getFeedback } from '../services/InterviewService';
+import { getScoreColor, getScoreTextColor, getScoreBackgroundColor, getScoreRating } from '../lib/utils';
+import { nextStepsRecommendations } from '../data/feedback';
+
+interface FeedbackData {
+  interviewId: string;
+  title: string;
+  date: string;
+  duration: number;
+  overallScore: number;
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  questionResponses: {
+    question: string;
+    analysis: string;
+    score: number;
+    feedback: string;
+  }[];
+  skillAssessment: {
+    technical: {
+      score: number;
+      feedback: string;
+    };
+    communication: {
+      score: number;
+      feedback: string;
+    };
+    problemSolving: {
+      score: number;
+      feedback: string;
+    };
+    experience: {
+      score: number;
+      feedback: string;
+    };
+  };
+}
 
 const FeedbackAnalysis: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
+  const [feedbackData, setFeedbackData] = useState<FeedbackData | null>(null);
   const [activeTab, setActiveTab] = useState('summary');
   
-  // In a real app, we would fetch the feedback data based on the interview ID
-  const feedbackData = mockFeedback;
-  
-  // Simulate loading the feedback data
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1500);
+    const loadFeedback = async () => {
+      setLoading(true);
+      try {
+        if (id) {
+          const data = await getFeedback(id);
+          setFeedbackData(data);
+        }
+      } catch (error) {
+        console.error('Error loading feedback:', error);
+      } finally {
+        // Simulate a minimum loading time for better UX
+        setTimeout(() => {
+          setLoading(false);
+        }, 1500);
+      }
+    };
     
-    return () => clearTimeout(timer);
-  }, []);
+    loadFeedback();
+  }, [id]);
   
-  if (loading) {
+  if (loading || !feedbackData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

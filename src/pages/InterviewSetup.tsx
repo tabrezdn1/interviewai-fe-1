@@ -1,16 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Code, Briefcase, User, Clock, Check, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
-import { interviewTypes, experienceLevels, difficultyLevels } from '../data/questions';
 import { interviewTips } from '../data/feedback';
+import { useAuth } from '../hooks/useAuth';
+import { fetchInterviewTypes, fetchExperienceLevels, fetchDifficultyLevels } from '../lib/utils';
+import { createInterview, InterviewFormData } from '../services/InterviewService';
+
+interface InterviewType {
+  id?: number;
+  type: string;
+  title: string;
+  description: string;
+  icon: string;
+}
+
+interface LevelOption {
+  id?: number;
+  value: string;
+  label: string;
+}
 
 const InterviewSetup: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [interviewTypes, setInterviewTypes] = useState<InterviewType[]>([]);
+  const [experienceLevels, setExperienceLevels] = useState<LevelOption[]>([]);
+  const [difficultyLevels, setDifficultyLevels] = useState<LevelOption[]>([]);
+  
+  const [formData, setFormData] = useState<InterviewFormData>({
     type: '',
     role: '',
     company: '',
@@ -18,6 +41,29 @@ const InterviewSetup: React.FC = () => {
     difficulty: 'medium',
     duration: 20,
   });
+  
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [types, expLevels, diffLevels] = await Promise.all([
+          fetchInterviewTypes(),
+          fetchExperienceLevels(),
+          fetchDifficultyLevels()
+        ]);
+        
+        setInterviewTypes(types);
+        setExperienceLevels(expLevels);
+        setDifficultyLevels(diffLevels);
+      } catch (error) {
+        console.error('Error loading setup data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, []);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -28,12 +74,23 @@ const InterviewSetup: React.FC = () => {
     setFormData(prev => ({ ...prev, type }));
   };
   
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < 3) {
       setStep(step + 1);
     } else {
       // Submit and navigate to interview
-      navigate('/interview/new');
+      setSubmitting(true);
+      try {
+        if (user) {
+          const interview = await createInterview(user.id, formData);
+          navigate(`/interview/${interview.id}`);
+        }
+      } catch (error) {
+        console.error('Error creating interview:', error);
+        // Handle error - show message to user
+      } finally {
+        setSubmitting(false);
+      }
     }
   };
   
@@ -45,7 +102,7 @@ const InterviewSetup: React.FC = () => {
   
   const isStepValid = () => {
     if (step === 1) return formData.type !== '';
-    if (step === 2) return formData.role !== '' && formData.company !== '';
+    if (step === 2) return formData.role !== '';
     return true;
   };
   
@@ -62,6 +119,14 @@ const InterviewSetup: React.FC = () => {
         return <Code className="h-6 w-6" />;
     }
   };
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12">
@@ -313,11 +378,14 @@ const InterviewSetup: React.FC = () => {
                     
                     <Button
                       onClick={handleNext}
-                      disabled={!isStepValid()}
+                      disabled={!isStepValid() || submitting}
                       className={`flex items-center gap-2 ${
-                        !isStepValid() ? 'opacity-50 cursor-not-allowed' : ''
+                        !isStepValid() || submitting ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                     >
+                      {submitting && (
+                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                      )}
                       {step === 3 ? 'Start Interview' : 'Continue'}
                       <ChevronRight className="h-4 w-4" />
                     </Button>

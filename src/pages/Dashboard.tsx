@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PlusCircle, Clock, CheckCircle, XCircle, BarChart2, ChevronRight, Calendar, TrendingUp, Award } from 'lucide-react';
@@ -6,34 +6,57 @@ import { useAuth } from '../hooks/useAuth';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { mockInterviews } from '../data/interviews';
-import { interviewTips } from '../data/feedback';
 import { formatDate, formatTime } from '../lib/utils';
+import { getInterviews } from '../services/InterviewService';
+import { interviewTips } from '../data/feedback';
+
+interface Interview {
+  id: string;
+  title: string;
+  company: string | null;
+  scheduled_at: string;
+  status: string;
+  score: number | null;
+}
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('upcoming');
+  const [interviews, setInterviews] = useState<Interview[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  const upcomingInterviews = mockInterviews.filter(
+  useEffect(() => {
+    const fetchInterviews = async () => {
+      if (user) {
+        try {
+          const data = await getInterviews(user.id);
+          setInterviews(data);
+        } catch (error) {
+          console.error('Failed to fetch interviews:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchInterviews();
+  }, [user]);
+  
+  const upcomingInterviews = interviews.filter(
     interview => interview.status === 'scheduled'
   );
   
-  const completedInterviews = mockInterviews.filter(
+  const completedInterviews = interviews.filter(
     interview => interview.status === 'completed'
   );
   
-  const getInterviewStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="h-5 w-5 text-success-500" />;
-      case 'scheduled':
-        return <Clock className="h-5 w-5 text-warning-500" />;
-      case 'canceled':
-        return <XCircle className="h-5 w-5 text-error-500" />;
-      default:
-        return null;
-    }
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12">
@@ -211,14 +234,14 @@ const Dashboard: React.FC = () => {
                             </div>
                             <div>
                               <h4 className="font-medium group-hover:text-primary-700 transition-colors">{interview.title}</h4>
-                              <p className="text-sm text-gray-600">{interview.company}</p>
+                              <p className="text-sm text-gray-600">{interview.company || 'No company specified'}</p>
                             </div>
                           </div>
                           <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4 text-gray-400" />
                               <span className="text-sm text-gray-600">
-                                {formatDate(interview.date)} at {formatTime(interview.date)}
+                                {formatDate(interview.scheduled_at)} at {formatTime(interview.scheduled_at)}
                               </span>
                             </div>
                             <Button asChild variant="default" size="sm">
@@ -264,15 +287,17 @@ const Dashboard: React.FC = () => {
                             </div>
                             <div>
                               <h4 className="font-medium group-hover:text-primary-700 transition-colors">{interview.title}</h4>
-                              <p className="text-sm text-gray-600">{interview.company}</p>
+                              <p className="text-sm text-gray-600">{interview.company || 'No company specified'}</p>
                             </div>
                           </div>
                           <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
-                            <Badge variant="success" className="h-6 flex items-center justify-center">
-                              Score: {interview.score}%
-                            </Badge>
+                            {interview.score && (
+                              <Badge variant="success" className="h-6 flex items-center justify-center">
+                                Score: {interview.score}%
+                              </Badge>
+                            )}
                             <div className="text-sm text-gray-600">
-                              {formatDate(interview.date)}
+                              {formatDate(interview.scheduled_at)}
                             </div>
                             <Button asChild variant="outline" size="sm">
                               <Link to={`/feedback/${interview.id}`} className="flex items-center gap-1">

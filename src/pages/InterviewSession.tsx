@@ -6,31 +6,43 @@ import {
   Clock, X, AlertCircle, PauseCircle, PlayCircle
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { mockQuestions } from '../data/questions';
+import { getInterview, completeInterview } from '../services/InterviewService';
+
+interface Question {
+  id: number;
+  text: string;
+  hint?: string;
+}
+
+interface InterviewData {
+  id: string;
+  title: string;
+  company?: string | null;
+  interview_types?: {
+    type: string;
+    title: string;
+  };
+  interviewer?: {
+    name: string;
+    role: string;
+    avatar: string;
+  };
+  questions: Question[];
+}
 
 const InterviewSession: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(true);
+  const [interviewData, setInterviewData] = useState<InterviewData | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [micEnabled, setMicEnabled] = useState(true);
   const [videoEnabled, setVideoEnabled] = useState(true);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(1200); // 20 minutes in seconds
-  
-  // Mock interview data - in a real app this would come from API based on interview ID
-  const interviewData = {
-    title: 'Frontend Developer Interview',
-    company: 'Tech Solutions Inc.',
-    interviewer: {
-      name: 'Alex Chen',
-      role: 'Senior Frontend Engineer',
-      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-    },
-    questions: mockQuestions.technical,
-  };
+  const [responses, setResponses] = useState<Record<number, string>>({});
   
   // Format time as MM:SS
   const formatTime = (seconds: number) => {
@@ -39,14 +51,32 @@ const InterviewSession: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
-  // Simulate loading the interview data
+  // Load interview data
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 2000);
+    const fetchInterviewData = async () => {
+      setLoading(true);
+      try {
+        if (id) {
+          const data = await getInterview(id);
+          setInterviewData(data);
+          
+          // Set timer based on interview duration if available
+          if (data.duration) {
+            setTimeRemaining(data.duration * 60);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching interview data:', error);
+      } finally {
+        // Simulate a minimum loading time for better UX
+        setTimeout(() => {
+          setLoading(false);
+        }, 1500);
+      }
+    };
     
-    return () => clearTimeout(timer);
-  }, []);
+    fetchInterviewData();
+  }, [id]);
   
   // Timer countdown
   useEffect(() => {
@@ -59,12 +89,58 @@ const InterviewSession: React.FC = () => {
     }
   }, [loading, isPaused, timeRemaining]);
   
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
+    if (!interviewData) return;
+    
+    // Save the response for the current question
+    // In a real app, you would save the actual speech transcript
+    setResponses(prev => ({
+      ...prev,
+      [currentQuestion]: `Mock response for question ${currentQuestion + 1}`
+    }));
+    
     if (currentQuestion < interviewData.questions.length - 1) {
       setCurrentQuestion(prev => prev + 1);
     } else {
-      // End interview and go to feedback
-      navigate(`/feedback/${id}`);
+      // Last question, complete the interview
+      try {
+        if (id) {
+          // Prepare mock feedback data
+          const feedbackData = {
+            overallScore: Math.floor(Math.random() * 30) + 70, // Random score between 70-100
+            questions: Object.entries(responses).map(([qIndex, response]) => {
+              const questionIndex = Number(qIndex);
+              const question = interviewData.questions[questionIndex];
+              return {
+                id: question.id,
+                text: question.text,
+                answer: response,
+                score: Math.floor(Math.random() * 30) + 70,
+                analysis: "The candidate showed good understanding of the topic.",
+                feedback: "Consider providing more concrete examples next time."
+              };
+            }),
+            feedback: {
+              summary: "Overall good performance with room for improvement in specific areas.",
+              overallScore: Math.floor(Math.random() * 30) + 70,
+              strengths: ["Clear communication", "Good technical knowledge", "Structured answers"],
+              improvements: ["More detailed examples", "Deeper technical explanations"],
+              skillAssessment: {
+                technical: { score: Math.floor(Math.random() * 30) + 70, feedback: "Good technical foundation." },
+                communication: { score: Math.floor(Math.random() * 30) + 70, feedback: "Clear communication skills." },
+                problemSolving: { score: Math.floor(Math.random() * 30) + 70, feedback: "Solid problem-solving approach." },
+                experience: { score: Math.floor(Math.random() * 30) + 70, feedback: "Good experience demonstration." }
+              }
+            }
+          };
+          
+          await completeInterview(id, feedbackData);
+          navigate(`/feedback/${id}`);
+        }
+      } catch (error) {
+        console.error('Error completing interview:', error);
+        navigate(`/feedback/${id}`); // Navigate anyway for demo purposes
+      }
     }
   };
   
@@ -84,7 +160,7 @@ const InterviewSession: React.FC = () => {
     navigate('/dashboard');
   };
   
-  if (loading) {
+  if (loading || !interviewData) {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white mb-6"></div>
@@ -93,6 +169,13 @@ const InterviewSession: React.FC = () => {
       </div>
     );
   }
+  
+  // Mock interviewer data if not provided by the API
+  const interviewer = interviewData.interviewer || {
+    name: 'Alex Chen',
+    role: 'Senior Frontend Engineer',
+    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+  };
   
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -144,7 +227,7 @@ const InterviewSession: React.FC = () => {
               <div 
                 className="w-full h-full min-h-[400px]"
                 style={{
-                  backgroundImage: `url(${interviewData.interviewer.avatar})`,
+                  backgroundImage: `url(${interviewer.avatar})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                 }}
@@ -161,13 +244,13 @@ const InterviewSession: React.FC = () => {
             {/* Interviewer info */}
             <div className="absolute bottom-4 left-4 flex items-center gap-3 bg-gray-900 bg-opacity-75 p-2 rounded-lg">
               <img 
-                src={interviewData.interviewer.avatar} 
-                alt={interviewData.interviewer.name} 
+                src={interviewer.avatar} 
+                alt={interviewer.name} 
                 className="w-10 h-10 rounded-full object-cover"
               />
               <div>
-                <p className="font-medium">{interviewData.interviewer.name}</p>
-                <p className="text-sm text-gray-400">{interviewData.interviewer.role}</p>
+                <p className="font-medium">{interviewer.name}</p>
+                <p className="text-sm text-gray-400">{interviewer.role}</p>
               </div>
             </div>
             
@@ -216,13 +299,15 @@ const InterviewSession: React.FC = () => {
                   {interviewData.questions[currentQuestion].text}
                 </p>
                 
-                <div className="bg-gray-700 p-3 rounded-lg flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-gray-300">
-                    <span className="font-medium text-yellow-500 block mb-1">Hint:</span>
-                    {interviewData.questions[currentQuestion].hint}
-                  </p>
-                </div>
+                {interviewData.questions[currentQuestion].hint && (
+                  <div className="bg-gray-700 p-3 rounded-lg flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-300">
+                      <span className="font-medium text-yellow-500 block mb-1">Hint:</span>
+                      {interviewData.questions[currentQuestion].hint}
+                    </p>
+                  </div>
+                )}
               </motion.div>
               
               <div className="text-sm text-gray-400 mt-auto">
