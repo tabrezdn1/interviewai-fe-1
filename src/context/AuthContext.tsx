@@ -40,11 +40,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const getUserSession = async () => {
       try {
+        console.log('Checking for existing session...');
         // Check active session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
+          console.log('Found existing session');
           await handleSession(session);
+        } else {
+          console.log('No active session found');
         }
         
         setLoading(false);
@@ -192,6 +196,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     try {
       if (provider === 'email' && credentials) {
+        // Email/password login
         const { data, error } = await supabase.auth.signInWithPassword({
           email: credentials.email,
           password: credentials.password,
@@ -215,7 +220,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: providerEnum,
           options: {
-            redirectTo: redirectTo
+            redirectTo: redirectTo,
+            skipBrowserRedirect: false // Make sure this is false to allow redirect
           }
         });
         

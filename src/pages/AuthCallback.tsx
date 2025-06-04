@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 /**
@@ -8,72 +8,102 @@ import { supabase } from '../lib/supabase';
  */
 const AuthCallback = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState('Completing your sign in...');
 
   useEffect(() => {
     // Process the OAuth callback
     const handleAuthCallback = async () => {
       try {
         console.log("Auth callback handler executing");
+        setMessage("Processing authentication response...");
         
-        // Check if we have hash params from the redirect
-        const hashParams = new URLSearchParams(location.hash.substring(1));
-        const accessToken = hashParams.get('access_token');
-        
-        if (accessToken) {
-          console.log("Found access token in hash, setting session manually");
-          // Manually set the session if we have token in hash
-          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: hashParams.get('refresh_token') || '',
-          });
+        // Check for access_token in hash (implicit flow)
+        if (window.location.hash && window.location.hash.includes('access_token')) {
+          const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const accessToken = hashParams.get('access_token');
+          const refreshToken = hashParams.get('refresh_token');
           
-          if (sessionError) {
-            console.error('Error setting session manually:', sessionError);
-            setError(sessionError.message);
-            return;
+          if (accessToken && refreshToken) {
+            console.log("Found access_token in hash, setting session manually");
+            setMessage("Setting up your session...");
+            
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            });
+            
+            if (error) {
+              throw error;
+            }
+            
+            if (data.session) {
+              console.log("Session set successfully!");
+              navigate('/dashboard');
+              return;
+            }
+          }
+        }
+        
+        // Check for code in URL (PKCE flow)
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        
+        if (code) {
+          console.log("Found code parameter, exchanging for session");
+          setMessage("Exchanging authorization code...");
+          
+          // The code exchange should happen automatically via Supabase's detectSessionInUrl
+          // We just need to get the session to confirm
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            throw error;
           }
           
-          if (sessionData.session) {
-            console.log('Successfully set session from hash params');
+          if (data.session) {
+            console.log("Session obtained successfully!");
             navigate('/dashboard');
-            return;
+          } else {
+            // If still no session, let's try to process it manually
+            setMessage("Finalizing authentication...");
+            
+            // Wait a moment to allow Supabase to process
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const { data: retryData, error: retryError } = await supabase.auth.getSession();
+            
+            if (retryError) {
+              throw retryError;
+            }
+            
+            if (retryData.session) {
+              console.log("Session obtained on retry!");
+              navigate('/dashboard');
+            } else {
+              throw new Error("Could not establish a session. Please try logging in again.");
+            }
           }
-        }
-        
-        // Get the session (Supabase should handle extracting it from URL)
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Error getting session during auth callback:', error);
-          setError(error.message);
-          setTimeout(() => navigate('/login?error=' + encodeURIComponent(error.message)), 1500);
-          return;
-        }
-        
-        if (data.session) {
-          console.log('Successfully authenticated!');
-          // Redirect to dashboard after successful authentication
-          navigate('/dashboard');
         } else {
-          // If no session was created, redirect back to login
-          setError('No session was created. Please try again.');
-          setTimeout(() => navigate('/login?error=Authentication failed'), 1500);
+          // No code or token found
+          throw new Error("No authentication code or token found in the URL.");
         }
       } catch (error: any) {
         console.error('Error in auth callback:', error);
-        setError(error.message || 'An unexpected error occurred');
-        setTimeout(() => navigate('/login?error=' + encodeURIComponent('Authentication failed')), 1500);
+        setError(error.message || 'Authentication failed');
+        // Redirect to login after a delay
+        setTimeout(() => {
+          navigate('/login?error=' + encodeURIComponent(error.message || 'Authentication failed'));
+        }, 2000);
       }
     };
 
     handleAuthCallback();
-  }, [navigate, location.hash]);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
+      <div className="max-w-md w-full p-8 bg-card rounded-lg shadow-lg border text-center">
         {error ? (
           <>
             <div className="text-destructive text-xl mb-4">Authentication Error</div>
@@ -82,9 +112,12 @@ const AuthCallback = () => {
           </>
         ) : (
           <>
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4 mx-auto"></div>
-            <h3 className="text-lg font-medium mb-2">Completing authentication...</h3>
-            <p className="text-muted-foreground">Please wait while we sign you in.</p>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-6 mx-auto"></div>
+            <h3 className="text-xl font-medium mb-3">Almost there!</h3>
+            <p className="text-muted-foreground">{message}</p>
+            <p className="text-sm text-muted-foreground/70 mt-4">
+              If you're not redirected automatically, please click <button onClick={() => navigate('/dashboard')} className="text-primary hover:underline">here</button>.
+            </p>
           </>
         )}
       </div>

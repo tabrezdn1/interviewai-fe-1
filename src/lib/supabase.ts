@@ -43,7 +43,7 @@ try {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        flowType: 'pkce' // Use PKCE for better security with OAuth
+        flowType: 'implicit' // Change from pkce to implicit
       }
     });
     
@@ -77,7 +77,7 @@ try {
   };
 }
 
-// Attempt to extract and process hash parameters manually if needed
+// Helper function to parse hash fragments from OAuth redirects
 export const processHashParams = () => {
   try {
     // Check if we have hash parameters in URL (common with OAuth redirects)
