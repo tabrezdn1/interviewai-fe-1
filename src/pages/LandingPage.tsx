@@ -1,0 +1,575 @@
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Video, MessageSquare, BarChart2, Brain, Check, ArrowRight, ExternalLink, Star } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { cn } from '../lib/utils';
+import { testimonials, siteStats } from '../data/testimonials';
+
+const LandingPage: React.FC = () => {
+  return (
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="min-h-screen flex items-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary-900 to-accent-900 z-0"></div>
+        <div 
+          className="absolute inset-0 opacity-20 z-0"
+          style={{
+            backgroundImage: "url('https://images.pexels.com/photos/3184302/pexels-photo-3184302.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        ></div>
+        
+        {/* Animated background elements */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full bg-white/10 backdrop-blur-xl"
+              style={{
+                width: Math.random() * 300 + 50,
+                height: Math.random() * 300 + 50,
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+              }}
+              animate={{
+                y: [0, Math.random() * 30 - 15],
+                x: [0, Math.random() * 30 - 15],
+              }}
+              transition={{
+                duration: 3 + Math.random() * 2,
+                repeat: Infinity,
+                repeatType: "reverse",
+                ease: "easeInOut",
+              }}
+            />
+          ))}
+        </div>
+        
+        <div className="container-custom mx-auto relative z-10 pt-24 pb-16">
+          <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+            <div className="md:w-1/2">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div className="mb-6 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-white/90 text-sm">
+                  <Star className="h-4 w-4 text-yellow-300" />
+                  <span>AI-powered interviews for the modern job seeker</span>
+                </div>
+                
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+                  <span className="relative">
+                    Master Your Interviews
+                    <motion.span 
+                      className="absolute -bottom-2 left-0 w-full h-1 bg-accent-500 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: "100%" }}
+                      transition={{ delay: 0.5, duration: 0.8 }}
+                    />
+                  </span>
+                  {" "}with AI-Powered Practice
+                </h1>
+                <p className="text-lg md:text-xl text-white/90 mb-8 max-w-lg">
+                  Prepare for your next job interview with realistic AI simulations, personalized feedback, and expert coaching.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Button asChild variant="white" size="lg" className="group font-semibold">
+                    <Link to="/login?signup=true">
+                      Get Started Free
+                      <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg" className="bg-transparent border-white/30 text-white hover:bg-white/10">
+                    <a href="#features">
+                      Learn More
+                    </a>
+                  </Button>
+                </div>
+                
+                <div className="mt-10 flex items-center gap-3">
+                  <div className="flex -space-x-2">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="w-8 h-8 rounded-full border-2 border-primary-900 overflow-hidden">
+                        <img 
+                          src={`https://randomuser.me/api/portraits/${i % 2 ? 'women' : 'men'}/${20 + i}.jpg`} 
+                          alt="User avatar" 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-white/90 text-sm">
+                    <strong>1,000+</strong> interviews conducted this week
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+            
+            <div className="md:w-1/2">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="relative"
+              >
+                {/* Glow effect behind the image */}
+                <div className="absolute -inset-4 bg-gradient-to-r from-primary-500/20 to-accent-500/20 rounded-xl blur-xl"></div>
+                
+                <div className="relative rounded-xl overflow-hidden shadow-2xl border border-white/10 backdrop-blur-sm">
+                  <img 
+                    src="https://images.pexels.com/photos/7516363/pexels-photo-7516363.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" 
+                    alt="AI Interview Simulation" 
+                    className="w-full h-auto"
+                  />
+                  
+                  {/* Floating badges */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, duration: 0.5 }}
+                    className="absolute -right-6 top-10"
+                  >
+                    <div className="bg-white rounded-lg shadow-lg p-3 flex items-center gap-2 transform rotate-3">
+                      <div className="w-8 h-8 bg-success-100 rounded-full flex items-center justify-center">
+                        <Check className="h-5 w-5 text-success-600" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Great Response!</p>
+                        <p className="text-xs text-gray-500">Confidence score 92%</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                  
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7, duration: 0.5 }}
+                    className="absolute -left-6 bottom-10"
+                  >
+                    <div className="bg-white rounded-lg shadow-lg p-3 transform -rotate-3">
+                      <p className="text-sm font-medium">AI-Generated Feedback</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-12 bg-gray-50">
+        <div className="container-custom mx-auto">
+          <motion.div 
+            className="grid grid-cols-2 md:grid-cols-4 gap-8"
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.1
+                }
+              }
+            }}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+          >
+            {siteStats.map((stat, index) => (
+              <StatCard key={index} number={stat.number} label={stat.label} />
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="py-20 bg-white">
+        <div className="container-custom mx-auto">
+          <div className="text-center mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-50 text-primary-700 text-sm mb-4">
+                <Star className="h-4 w-4 fill-primary-500 text-primary-500" />
+                <span className="font-medium">Powerful Features</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need to Succeed</h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Our platform provides all the tools you need to prepare for your next interview.
+              </p>
+            </motion.div>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <FeatureCard 
+              icon={<Video className="h-8 w-8 text-primary-600" />}
+              title="Realistic AI Interviews"
+              description="Experience authentic interview scenarios with our AI-powered video and voice simulations."
+              delay={0}
+            />
+            
+            <FeatureCard 
+              icon={<Brain className="h-8 w-8 text-primary-600" />}
+              title="Industry-Specific Questions"
+              description="Practice with questions tailored to your industry, role, and experience level."
+              delay={0.1}
+            />
+            
+            <FeatureCard 
+              icon={<MessageSquare className="h-8 w-8 text-primary-600" />}
+              title="Real-time Feedback"
+              description="Get instant feedback on your responses, body language, and presentation style."
+              delay={0.2}
+            />
+            
+            <FeatureCard 
+              icon={<BarChart2 className="h-8 w-8 text-primary-600" />}
+              title="Performance Analytics"
+              description="Track your progress over time with detailed performance metrics and insights."
+              delay={0.3}
+            />
+            
+            <FeatureCard 
+              icon={<Check className="h-8 w-8 text-primary-600" />}
+              title="Customizable Sessions"
+              description="Create interview sessions tailored to specific job roles, companies, or skill sets."
+              delay={0.4}
+            />
+            
+            <FeatureCard 
+              icon={<Check className="h-8 w-8 text-primary-600" />}
+              title="Expert Coaching"
+              description="Access professional interview coaching and personalized improvement plans."
+              delay={0.5}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-20 bg-gray-50">
+        <div className="container-custom mx-auto">
+          <div className="text-center mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary-50 text-secondary-700 text-sm mb-4">
+                <span className="font-medium">Simple Process</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Prepare for your next interview in three simple steps
+              </p>
+            </motion.div>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <ProcessCard 
+              number="01" 
+              title="Set Up Your Interview" 
+              description="Choose the job role, interview type, and difficulty level."
+            />
+            <ProcessCard 
+              number="02" 
+              title="Practice with AI" 
+              description="Engage in a realistic interview with our advanced AI interviewer."
+            />
+            <ProcessCard 
+              number="03" 
+              title="Get Feedback" 
+              description="Receive detailed analysis and actionable improvement tips."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-20 bg-white">
+        <div className="container-custom mx-auto">
+          <div className="text-center mb-16">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-50 text-accent-700 text-sm mb-4">
+                <span className="font-medium">Success Stories</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">What Our Users Say</h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Join thousands who have improved their interview skills and landed their dream jobs
+              </p>
+            </motion.div>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {testimonials.slice(0, 3).map((testimonial, index) => (
+              <TestimonialCard 
+                key={index}
+                quote={testimonial.quote}
+                name={testimonial.name}
+                title={testimonial.title}
+                image={testimonial.image}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container-custom mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="relative overflow-hidden rounded-3xl"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-accent-600 z-0"></div>
+            <div className="absolute inset-0 z-0 overflow-hidden">
+              {Array.from({ length: 20 }).map((_, i) => (
+                <div 
+                  key={i} 
+                  className="absolute bg-white/10 rounded-full"
+                  style={{
+                    width: Math.random() * 100 + 50,
+                    height: Math.random() * 100 + 50,
+                    top: `${Math.random() * 100}%`,
+                    left: `${Math.random() * 100}%`,
+                    animationDelay: `${Math.random() * 2}s`,
+                  }}
+                ></div>
+              ))}
+            </div>
+            
+            <div className="relative z-10 p-8 md:p-12">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                    Ready to Ace Your Next Interview?
+                  </h2>
+                  <p className="text-white/90 text-lg mb-8 md:mb-0 max-w-xl">
+                    Join thousands of job seekers who have improved their interview skills and landed their dream jobs.
+                  </p>
+                </div>
+                <Button asChild variant="white" size="lg" className="group whitespace-nowrap font-semibold">
+                  <Link to="/login?signup=true">
+                    Get Started Free
+                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-16">
+        <div className="container-custom mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
+            <div className="col-span-1 md:col-span-2">
+              <Link to="/" className="text-2xl font-bold flex items-center gap-2 mb-4">
+                <MessageSquare className="h-6 w-6 text-primary-400" />
+                <span>InterviewAI</span>
+              </Link>
+              <p className="text-gray-400 mb-6 max-w-md">
+                InterviewAI helps job seekers prepare for interviews with AI-powered simulations, personalized feedback, and expert coaching.
+              </p>
+              <div className="flex gap-4">
+                <a href="#" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors">
+                  <span className="sr-only">Twitter</span>
+                  <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-1-4.8 4-8.5 8-5 1.6 1.5 2 2 2 2z"></path>
+                  </svg>
+                </a>
+                <a href="#" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors">
+                  <span className="sr-only">LinkedIn</span>
+                  <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"></path>
+                    <rect x="2" y="9" width="4" height="12"></rect>
+                    <circle cx="4" cy="4" r="2"></circle>
+                  </svg>
+                </a>
+                <a href="#" className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary-600 transition-colors">
+                  <span className="sr-only">GitHub</span>
+                  <svg className="h-4 w-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"></path>
+                  </svg>
+                </a>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="font-medium text-lg mb-4 text-white/80">Product</h3>
+              <ul className="space-y-3">
+                <li><a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Testimonials</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">FAQ</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-medium text-lg mb-4 text-white/80">Company</h3>
+              <ul className="space-y-3">
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Careers</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-500 mb-4 md:mb-0">© 2025 InterviewAI. All rights reserved.</p>
+            <div className="flex gap-6">
+              <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Privacy Policy</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Terms of Service</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors text-sm">Cookies</a>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+interface StatCardProps {
+  number: string;
+  label: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ number, label }) => {
+  return (
+    <motion.div 
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0 }
+      }}
+      className="bg-white rounded-xl p-6 shadow-md border border-gray-100"
+    >
+      <p className="text-3xl md:text-4xl font-bold text-gray-900 mb-1">{number}</p>
+      <p className="text-gray-600">{label}</p>
+    </motion.div>
+  );
+};
+
+interface FeatureCardProps {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  delay: number;
+}
+
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, delay }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay }}
+      className="group"
+    >
+      <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-md hover:shadow-xl transition-all duration-300 h-full flex flex-col relative overflow-hidden">
+        {/* Accent border that appears on hover */}
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary-600 to-accent-600 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
+        
+        <div className="w-12 h-12 rounded-lg bg-primary-50 flex items-center justify-center mb-4 group-hover:bg-primary-100 transition-colors">
+          {icon}
+        </div>
+        <h3 className="text-xl font-semibold mb-3 group-hover:text-primary-600 transition-colors">{title}</h3>
+        <p className="text-gray-600 mb-4">{description}</p>
+        <div className="mt-auto pt-4">
+          <a href="#" className="text-primary-600 font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+            Learn more <ArrowRight className="h-4 w-4" />
+          </a>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+interface ProcessCardProps {
+  number: string;
+  title: string;
+  description: string;
+}
+
+const ProcessCard: React.FC<ProcessCardProps> = ({ number, title, description }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="relative"
+    >
+      {/* Connection line */}
+      <div className="hidden md:block absolute top-10 left-1/2 w-full h-1 bg-gray-200 -z-10"></div>
+      
+      <div className="flex flex-col items-center text-center">
+        <div className="relative mb-6">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-xl font-bold">
+            {number}
+          </div>
+          {/* Animated pulse effect */}
+          <div className="absolute inset-0 rounded-full bg-primary-500/20 animate-pulse-slow"></div>
+        </div>
+        <h3 className="text-xl font-semibold mb-2">{title}</h3>
+        <p className="text-gray-600">{description}</p>
+      </div>
+    </motion.div>
+  );
+};
+
+interface TestimonialCardProps {
+  quote: string;
+  name: string;
+  title: string;
+  image: string;
+}
+
+const TestimonialCard: React.FC<TestimonialCardProps> = ({ quote, name, title, image }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="bg-white rounded-xl p-6 shadow-md border border-gray-100 hover:shadow-lg transition-all"
+    >
+      <div className="flex items-center gap-1 mb-4">
+        {[1, 2, 3, 4, 5].map(i => (
+          <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+        ))}
+      </div>
+      <p className="text-gray-700 mb-6 italic">"{quote}"</p>
+      <div className="flex items-center gap-3">
+        <img src={image} alt={name} className="w-10 h-10 rounded-full object-cover" />
+        <div>
+          <p className="font-medium">{name}</p>
+          <p className="text-sm text-gray-600">{title}</p>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+export default LandingPage;
