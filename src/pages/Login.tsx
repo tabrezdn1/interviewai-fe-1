@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MessageSquare, Github, Linkedin, Mail } from 'lucide-react';
+import { MessageSquare, Github, Linkedin, Mail, EyeOff, Eye } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
-import EmailSignInForm from '../components/auth/EmailSignInForm';
-import EmailSignUpForm from '../components/auth/EmailSignUpForm';
 
 const Login: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
-  const [formMode, setFormMode] = useState<'oauth' | 'email'>('oauth');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formMode, setFormMode] = useState<'oauth' | 'email'>('oauth');
   
   const { login, signUp, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
@@ -37,41 +39,37 @@ const Login: React.FC = () => {
     try {
       setError(null);
       await login(provider);
-      // Note: Redirect is handled by Supabase OAuth flow
-    } catch (error: any) {
+    } catch (error) {
       console.error('Login failed:', error);
-      setError(error.message || 'Authentication failed. Please try again.');
+      setError('Authentication failed. Please try again.');
     }
   };
   
-  const handleEmailSignIn = async (data: { email: string; password: string }) => {
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
     setIsSubmitting(true);
     setError(null);
     
     try {
-      await login('email', data);
+      if (isSignUp) {
+        if (!name) {
+          throw new Error('Please enter your name');
+        }
+        await signUp({ email, password, name });
+      } else {
+        await login('email', { email, password });
+      }
       navigate('/dashboard');
     } catch (error: any) {
-      console.error('Sign in failed:', error);
-      setError(error.message || 'Sign in failed. Please check your credentials and try again.');
+      console.error('Authentication failed:', error);
+      setError(error.message || 'Authentication failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
   
-  const handleEmailSignUp = async (data: { email: string; password: string; name: string }) => {
-    setIsSubmitting(true);
-    setError(null);
-    
-    try {
-      await signUp(data);
-      // Navigate to dashboard is handled in the Auth context
-    } catch (error: any) {
-      console.error('Sign up failed:', error);
-      setError(error.message || 'Sign up failed. Please try again later.');
-    } finally {
-      setIsSubmitting(false);
-    }
+  const validateForm = () => {
+    return email.includes('@') && password.length >= 6 && (!isSignUp || name.length >= 2);
   };
   
   if (loading) {
@@ -170,21 +168,89 @@ const Login: React.FC = () => {
                 </Button>
               </div>
             ) : (
-              <>
-                {isSignUp ? (
-                  <EmailSignUpForm 
-                    onSubmit={handleEmailSignUp} 
-                    isLoading={isSubmitting} 
-                    onCancel={() => setFormMode('oauth')} 
-                  />
-                ) : (
-                  <EmailSignInForm 
-                    onSubmit={handleEmailSignIn} 
-                    isLoading={isSubmitting} 
-                    onCancel={() => setFormMode('oauth')} 
-                  />
+              <form onSubmit={handleEmailAuth} className="space-y-4">
+                {isSignUp && (
+                  <div>
+                    <label htmlFor="name\" className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name
+                    </label>
+                    <input
+                      id="name"
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Your name"
+                      required
+                    />
+                  </div>
                 )}
-              </>
+                
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="you@example.com"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-10"
+                      placeholder="••••••••"
+                      required
+                      minLength={6}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    >
+                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Password must be at least 6 characters long
+                  </p>
+                </div>
+                
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting || !validateForm()}
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                      <span>Processing...</span>
+                    </div>
+                  ) : isSignUp ? 'Sign up' : 'Sign in'}
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setFormMode('oauth')}
+                >
+                  Back to other options
+                </Button>
+              </form>
             )}
           </CardContent>
           
