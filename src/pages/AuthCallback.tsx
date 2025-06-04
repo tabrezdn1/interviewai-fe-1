@@ -85,6 +85,34 @@ const AuthCallback = () => {
             }
           }
         } else {
+          // Check for stored tokens from processHashParams
+          const accessToken = sessionStorage.getItem('sb-access-token');
+          const refreshToken = sessionStorage.getItem('sb-refresh-token');
+          
+          if (accessToken && refreshToken) {
+            console.log("Found stored tokens, setting session");
+            setMessage("Setting up your session from stored tokens...");
+            
+            const { data, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            });
+            
+            if (error) {
+              throw error;
+            }
+            
+            if (data.session) {
+              // Clean up tokens
+              sessionStorage.removeItem('sb-access-token');
+              sessionStorage.removeItem('sb-refresh-token');
+              
+              console.log("Session set successfully from stored tokens!");
+              navigate('/dashboard');
+              return;
+            }
+          }
+          
           // No code or token found
           throw new Error("No authentication code or token found in the URL.");
         }

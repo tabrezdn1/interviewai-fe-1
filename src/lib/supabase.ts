@@ -43,7 +43,7 @@ try {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        flowType: 'implicit' // Change from pkce to implicit
+        flowType: 'implicit' // This is a critical change from pkce to implicit
       }
     });
     
