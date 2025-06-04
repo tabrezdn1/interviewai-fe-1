@@ -40,15 +40,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const getUserSession = async () => {
       try {
-        console.log('Checking for existing session...');
         // Check active session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
-          console.log('Found existing session');
           await handleSession(session);
-        } else {
-          console.log('No active session found');
         }
         
         setLoading(false);
@@ -97,7 +93,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (error || !profile) {
         console.log("Creating new profile for user:", supabaseUser);
         
-        // Get the name from user metadata - different providers structure this differently
         const name = supabaseUser.user_metadata?.name || 
                      supabaseUser.user_metadata?.full_name || 
                      supabaseUser.user_metadata?.user_name ||
@@ -196,7 +191,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     try {
       if (provider === 'email' && credentials) {
-        // Email/password login
         const { data, error } = await supabase.auth.signInWithPassword({
           email: credentials.email,
           password: credentials.password,
@@ -208,19 +202,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           await handleSession(data.session);
         }
       } else if (['google', 'github'].includes(provider)) {
+        // For OAuth providers, we need to use signInWithOAuth
         const providerEnum = provider as Provider;
         
-        // Get the current URL's origin for the redirect URL
-        const origin = window.location.origin;
-        const redirectTo = `${origin}/dashboard`;
-        
-        console.log(`OAuth login with ${provider}, redirect URL: ${redirectTo}`);
+        // Determine the absolute URL for the redirect
+        const redirectUrl = new URL('/auth/callback', window.location.origin).toString();
+        console.log('OAuth redirect URL:', redirectUrl);
         
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: providerEnum,
           options: {
-            redirectTo: redirectTo,
-            skipBrowserRedirect: false // Make sure this is false to allow redirect
+            redirectTo: redirectUrl,
+            skipBrowserRedirect: false
           }
         });
         
@@ -229,9 +222,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           throw error;
         }
         
+        // For OAuth, we don't set user here because it will be handled by the auth state change
+        // after redirect back from the OAuth provider
         console.log("OAuth redirect initiated:", data);
         
-        // The browser will be redirected to the OAuth provider
+        // The browser will be redirected to the OAuth provider, so we don't need to do anything else here
       } else {
         throw new Error('Invalid login method');
       }
@@ -248,12 +243,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
-      
-      // Clear any stored tokens in sessionStorage
-      sessionStorage.removeItem('sb-access-token');
-      sessionStorage.removeItem('sb-refresh-token');
-      
-      // Navigate to home page after logout
+      // Redirect to home page after logout
       window.location.href = '/';
     } catch (error) {
       console.error('Error logging out:', error);
