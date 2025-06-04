@@ -17,6 +17,7 @@ try {
       auth: {
         signInWithPassword: () => Promise.reject(new Error('Supabase not configured')),
         signInWithOAuth: () => Promise.reject(new Error('Supabase not configured')),
+        setSession: () => Promise.reject(new Error('Supabase not configured')),
         signUp: () => Promise.reject(new Error('Supabase not configured')),
         signOut: () => Promise.reject(new Error('Supabase not configured')),
         onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } }, error: new Error('Supabase not configured') }),
@@ -55,6 +56,7 @@ try {
     auth: {
       signInWithPassword: () => Promise.reject(new Error('Supabase client initialization failed')),
       signInWithOAuth: () => Promise.reject(new Error('Supabase client initialization failed')),
+      setSession: () => Promise.reject(new Error('Supabase client initialization failed')),
       signUp: () => Promise.reject(new Error('Supabase client initialization failed')),
       signOut: () => Promise.reject(new Error('Supabase client initialization failed')),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } }, error: new Error('Supabase client initialization failed') }),
@@ -75,24 +77,34 @@ try {
   };
 }
 
-// Debug function to check if Supabase is properly configured
-export const checkSupabaseConnection = async () => {
+// Attempt to extract and process hash parameters manually if needed
+export const processHashParams = () => {
   try {
-    // Attempt to get current session
-    const { data, error } = await supabase.auth.getSession();
-    if (error) {
-      console.error('Error checking Supabase connection:', error);
-      return false;
+    // Check if we have hash parameters in URL (common with OAuth redirects)
+    if (window.location.hash && window.location.hash.includes('access_token')) {
+      console.log('Found access token in URL hash, manually handling...');
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      
+      if (accessToken && refreshToken) {
+        console.log('Extracted tokens from hash, will set session');
+        // Store for later use (AuthCallback component will use this)
+        sessionStorage.setItem('sb-access-token', accessToken);
+        sessionStorage.setItem('sb-refresh-token', refreshToken);
+        return true;
+      }
     }
-    console.log('Supabase connection successful. Session:', data.session ? 'Active' : 'None');
-    return true;
+    return false;
   } catch (err) {
-    console.error('Exception checking Supabase connection:', err);
+    console.error('Error processing hash parameters:', err);
     return false;
   }
 };
 
-// Initialize connection check
-checkSupabaseConnection();
+// Process hash params on initial load
+if (typeof window !== 'undefined') {
+  processHashParams();
+}
 
 export { supabase };

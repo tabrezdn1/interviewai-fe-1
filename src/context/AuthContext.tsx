@@ -93,6 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (error || !profile) {
         console.log("Creating new profile for user:", supabaseUser);
         
+        // Get the name from user metadata - different providers structure this differently
         const name = supabaseUser.user_metadata?.name || 
                      supabaseUser.user_metadata?.full_name || 
                      supabaseUser.user_metadata?.user_name ||
@@ -205,15 +206,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // For OAuth providers, we need to use signInWithOAuth
         const providerEnum = provider as Provider;
         
-        // Determine the absolute URL for the redirect
-        const redirectUrl = new URL('/auth/callback', window.location.origin).toString();
-        console.log('OAuth redirect URL:', redirectUrl);
+        // Get the current URL's origin for the redirect URL
+        const origin = window.location.origin;
+        const redirectTo = `${origin}/auth/callback`;
+        
+        console.log(`OAuth login with ${provider}, redirect URL: ${redirectTo}`);
         
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: providerEnum,
           options: {
-            redirectTo: redirectUrl,
-            skipBrowserRedirect: false
+            redirectTo: redirectTo
           }
         });
         
@@ -222,8 +224,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           throw error;
         }
         
-        // For OAuth, we don't set user here because it will be handled by the auth state change
-        // after redirect back from the OAuth provider
         console.log("OAuth redirect initiated:", data);
         
         // The browser will be redirected to the OAuth provider, so we don't need to do anything else here
@@ -243,7 +243,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       setUser(null);
-      // Redirect to home page after logout
+      
+      // Clear any stored tokens in sessionStorage
+      sessionStorage.removeItem('sb-access-token');
+      sessionStorage.removeItem('sb-refresh-token');
+      
+      // Navigate to home page after logout
       window.location.href = '/';
     } catch (error) {
       console.error('Error logging out:', error);
