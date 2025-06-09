@@ -238,7 +238,7 @@ const InterviewSetup: React.FC = () => {
                             value={formData.role}
                             onChange={handleInputChange}
                             placeholder="e.g. Frontend Developer, Product Manager"
-                            className="input"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             required
                           />
                         </div>
@@ -254,7 +254,7 @@ const InterviewSetup: React.FC = () => {
                             value={formData.company}
                             onChange={handleInputChange}
                             placeholder="e.g. Google, Amazon, Startup"
-                            className="input"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           />
                         </div>
                         
@@ -267,7 +267,7 @@ const InterviewSetup: React.FC = () => {
                             name="experience"
                             value={formData.experience}
                             onChange={handleInputChange}
-                            className="input"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           >
                             <option value="">Select experience level</option>
                             {experienceLevels.map(level => (
@@ -299,7 +299,7 @@ const InterviewSetup: React.FC = () => {
                             name="difficulty"
                             value={formData.difficulty}
                             onChange={handleInputChange}
-                            className="input"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                           >
                             {difficultyLevels.map(level => (
                               <option key={level.value} value={level.value}>{level.label}</option>
