@@ -351,7 +351,7 @@ const LandingPage: React.FC = () => {
                       : "text-gray-600 hover:text-gray-800"
                   )}
                 >
-                  Annual <span className="text-green-600 text-xs ml-1">Save 20%</span>
+                  Annual
                 </button>
                 
                 {/* Sliding background */}
