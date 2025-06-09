@@ -167,7 +167,24 @@ class TavusAPI {
   // Get available replicas
   async getReplicas(): Promise<TavusReplicaResponse[]> {
     try {
-      return await this.makeRequest<TavusReplicaResponse[]>('/v2/replicas');
+      const response = await this.makeRequest<any>('/v2/replicas');
+      
+      // Handle different possible response formats
+      if (Array.isArray(response)) {
+        return response;
+      } else if (response && typeof response === 'object') {
+        // Check common response wrapper patterns
+        if (Array.isArray(response.data)) {
+          return response.data;
+        } else if (Array.isArray(response.replicas)) {
+          return response.replicas;
+        } else if (Array.isArray(response.results)) {
+          return response.results;
+        }
+      }
+      
+      console.warn('Unexpected replicas response format:', response);
+      return [];
     } catch (error) {
       console.error('Error fetching replicas:', error);
       throw error;

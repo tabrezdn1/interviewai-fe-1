@@ -62,7 +62,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
         setIsMockMode(true);
         
         // Create mock replicas for each round
-        const mockReplicas = rounds.map(round => ({
+        const mockReplicas: TavusReplicaResponse[] = rounds.map(round => ({
           replica_id: `mock-${round.id}-replica`,
           replica_name: `${round.name} (Demo Mode)`,
           status: 'ready',
@@ -80,17 +80,45 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
         const tavusAPI = getTavusAPI();
         console.log('Fetching Tavus replicas...');
         
-        const replicaList = await tavusAPI.getReplicas();
-        console.log('Fetched replicas:', replicaList);
+        const replicaResponse = await tavusAPI.getReplicas();
+        console.log('Raw replica response:', replicaResponse);
         
-        // Ensure replicaList is always an array to prevent "find is not a function" errors
-        const safeReplicaList = Array.isArray(replicaList) ? replicaList : [];
-        setReplicas(safeReplicaList);
+        // Handle different possible response formats
+        let replicaList: TavusReplicaResponse[] = [];
         
-        if (safeReplicaList.length === 0) {
+        if (Array.isArray(replicaResponse)) {
+          replicaList = replicaResponse;
+        } else if (replicaResponse && typeof replicaResponse === 'object') {
+          // Check if response has a data property
+          if (Array.isArray(replicaResponse.data)) {
+            replicaList = replicaResponse.data;
+          } else if (Array.isArray(replicaResponse.replicas)) {
+            replicaList = replicaResponse.replicas;
+          } else {
+            console.warn('Unexpected replica response format:', replicaResponse);
+            replicaList = [];
+          }
+        }
+        
+        console.log('Processed replica list:', replicaList);
+        setReplicas(replicaList);
+        
+        if (replicaList.length === 0) {
           console.warn('No replicas found, switching to mock mode');
           setIsMockMode(true);
           setError('No AI interviewers available. Using demo mode.');
+          
+          // Create mock replicas as fallback
+          const mockReplicas: TavusReplicaResponse[] = rounds.map(round => ({
+            replica_id: `mock-${round.id}-replica`,
+            replica_name: `${round.name} (Demo Mode)`,
+            status: 'ready',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            visibility: 'private'
+          }));
+          
+          setReplicas(mockReplicas);
         }
       } catch (err) {
         console.error('Failed to load Tavus replicas:', err);
@@ -100,7 +128,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
         console.log('Switching to mock mode due to API error');
         
         // Fallback to mock replicas if API fails
-        const mockReplicas = rounds.map(round => ({
+        const mockReplicas: TavusReplicaResponse[] = rounds.map(round => ({
           replica_id: `mock-${round.id}-replica`,
           replica_name: `${round.name} (Demo Mode)`,
           status: 'ready',
@@ -120,6 +148,8 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
 
   // Select appropriate replica for a specific round
   const selectReplicaForRound = useCallback((roundId?: string): { replicaId: string | null; round: InterviewRound | null } => {
+    console.log('selectReplicaForRound called with:', { roundId, availableRounds: availableRounds.length, replicas: replicas.length });
+    
     if (!Array.isArray(availableRounds) || availableRounds.length === 0) {
       console.warn('No available rounds configured');
       return { replicaId: null, round: null };
@@ -149,13 +179,17 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
     }
 
     if (!targetRound) {
+      console.warn('No target round found');
       return { replicaId: null, round: null };
     }
 
     console.log('Selected round:', targetRound);
 
-    // Check if replica is available - ensure replicas is always an array
-    const safeReplicas = Array.isArray(replicas) ? replicas : [];
+    // Ensure replicas is always an array before using find
+    if (!Array.isArray(replicas)) {
+      console.error('Replicas is not an array:', typeof replicas, replicas);
+      return { replicaId: null, round: null };
+    }
     
     if (isMockMode) {
       return { 
@@ -164,8 +198,8 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       };
     }
 
-    const availableReplica = safeReplicas.find(r => 
-      r.replica_id === targetRound.replicaId && r.status === 'ready'
+    const availableReplica = replicas.find(r => 
+      r && r.replica_id === targetRound!.replicaId && r.status === 'ready'
     );
 
     if (availableReplica) {
@@ -177,11 +211,15 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
     }
 
     console.warn('No matching replica found for round:', targetRound);
-    return { replicaId: null, round: null };
+    // Fallback to mock mode if no replica found
+    return { 
+      replicaId: `mock-${targetRound.id}-replica`, 
+      round: targetRound 
+    };
   }, [availableRounds, replicas, isMockMode, options.interviewType]);
 
   const startConversation = useCallback(async (roundId?: string) => {
-    console.log('Starting Tavus conversation...', { roundId, isMockMode });
+    console.log('Starting Tavus conversation...', { roundId, isMockMode, replicasLength: replicas.length });
     setIsLoading(true);
     setError(null);
 
@@ -239,11 +277,35 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       setIsConversationActive(true);
     } catch (err) {
       console.error('Failed to start Tavus conversation:', err);
-      setError(err instanceof Error ? err.message : 'Failed to start interview');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start interview';
+      setError(errorMessage);
+      
+      // If real API fails, fallback to mock mode
+      if (!isMockMode && !errorMessage.includes('mock')) {
+        console.log('Falling back to mock mode due to error');
+        setIsMockMode(true);
+        
+        // Try again with mock mode
+        const { round } = selectReplicaForRound(roundId);
+        if (round) {
+          const mockConversation: TavusConversationResponse = {
+            conversation_id: `mock-conversation-${round.id}-${Date.now()}`,
+            conversation_url: `https://tavus.io/conversations/mock-conversation-${round.id}`,
+            status: 'active',
+            created_at: new Date().toISOString(),
+            round: round.id
+          };
+          
+          setConversation(mockConversation);
+          setIsConversationActive(true);
+          setCurrentRound(round);
+          setError('Using demo mode - add Tavus API key for real AI video');
+        }
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [selectReplicaForRound, options.role]);
+  }, [selectReplicaForRound, options.role, isMockMode, replicas.length]);
 
   const endConversation = useCallback(async () => {
     if (!conversation) return;
@@ -275,7 +337,13 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       setIsConversationActive(false);
     } catch (err) {
       console.error('Failed to end Tavus conversation:', err);
-      setError(err instanceof Error ? err.message : 'Failed to end interview');
+      // Don't set error for ending conversation, just log it
+      console.warn('Conversation may not have ended properly, but continuing...');
+      
+      // Force cleanup even if API call fails
+      setConversation(null);
+      setCurrentRound(null);
+      setIsConversationActive(false);
     } finally {
       setIsLoading(false);
     }
@@ -306,11 +374,11 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
 
   // Auto-start conversation if requested
   useEffect(() => {
-    if (options.autoStart && availableRounds.length > 0 && !conversation && !isLoading) {
+    if (options.autoStart && availableRounds.length > 0 && !conversation && !isLoading && replicas.length > 0) {
       console.log('Auto-starting conversation');
       startConversation();
     }
-  }, [options.autoStart, availableRounds.length, conversation, isLoading, startConversation]);
+  }, [options.autoStart, availableRounds.length, conversation, isLoading, startConversation, replicas.length]);
 
   return {
     conversation,
