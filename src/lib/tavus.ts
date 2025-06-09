@@ -255,10 +255,23 @@ class TavusAPI {
       if (!request.persona_id) {
         throw new Error('persona_id is required for Tavus conversation');
       }
+
+      // Set default properties
+      const defaultRequest = {
+        ...request,
+        properties: {
+          max_call_duration: 3600,
+          participant_left_timeout: 60,
+          participant_absent_timeout: 60,
+          enable_recording: true,
+          enable_transcription: true,
+          language: 'English',
+        },
+      };
       
       const response = await this.makeRequest<TavusConversationResponse>('/v2/conversations', {
         method: 'POST',
-        body: JSON.stringify(request),
+        body: JSON.stringify(defaultRequest),
       });
       
       return {
