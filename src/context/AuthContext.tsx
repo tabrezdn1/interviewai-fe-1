@@ -206,7 +206,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: providerEnum,
           options: {
-            redirectTo: options?.redirectTo || `${window.location.origin}/dashboard`,
+            redirectTo: `${window.location.origin}/dashboard`,
             queryParams: {
               // Optional additional parameters
               prompt: 'select_account', // Force account selection (Google)
