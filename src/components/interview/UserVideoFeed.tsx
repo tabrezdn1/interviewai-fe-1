@@ -27,6 +27,14 @@ const UserVideoFeed: React.FC<UserVideoFeedProps> = ({
       videoRef.current.srcObject = videoStream;
       videoRef.current.play().catch(console.error);
     }
+    
+    // Cleanup function to properly detach media stream
+    return () => {
+      if (videoRef.current) {
+        console.log('Cleaning up video stream');
+        videoRef.current.srcObject = null;
+      }
+    };
   }, [videoStream]);
   
   useEffect(() => {
