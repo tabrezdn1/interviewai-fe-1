@@ -886,3 +886,5 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({ quote, name, title, i
 };
 
 export default LandingPage;
+
+export default LandingPage
