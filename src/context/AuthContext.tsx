@@ -17,7 +17,7 @@ interface AuthContextType {
     credentials?: { email: string; password: string },
     options?: { redirectTo?: string }
   ) => Promise<void>;
-  testLogin: () => Promise<void>;
+  signUp: (credentials: { email: string; password: string; name: string }) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -27,7 +27,7 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   login: async () => {},
-  testLogin: async () => {},
+  signUp: async () => {},
   logout: async () => {},
   isAuthenticated: false,
 });
@@ -62,6 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             } else {
               setUser(null);
             }
+            setLoading(false);
           }
         );
         
@@ -135,6 +136,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const signUp = async (credentials: { email: string; password: string; name: string }): Promise<void> => {
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: credentials.email,
+        password: credentials.password,
+        options: {
+          data: {
+            full_name: credentials.name,
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+      
+      if (error) throw error;
+      
+      if (data.user && data.session) {
+        // User is automatically signed in after signup
+        await handleSession(data.session);
+      } else if (data.user && !data.session) {
+        // Email confirmation required
+        throw new Error('Please check your email and click the confirmation link to complete your registration.');
+      }
+    } catch (error: any) {
+      console.error('Error signing up:', error);
+      throw new Error(error.error_description || error.message || 'Error during sign up');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const login = async (
     provider: string,
     credentials?: { email: string; password: string },
@@ -143,7 +176,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(true);
     
     try {
-      if (['google', 'github'].includes(provider)) {
+      if (provider === 'email' && credentials) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: credentials.email,
+          password: credentials.password,
+        });
+        
+        if (error) throw error;
+        
+        if (data.session) {
+          await handleSession(data.session);
+        }
+      } else if (['google', 'github'].includes(provider)) {
         // For OAuth providers, we need to use signInWithOAuth
         const providerEnum = provider as Provider;
         
@@ -179,19 +223,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const testLogin = async (): Promise<void> => {
-    // Create a fake user for testing
-    const testUser: UserProfile = {
-      id: 'test-user-123',
-      name: 'Test User',
-      email: 'test@example.com',
-      avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
-    };
-    
-    setUser(testUser);
-    setLoading(false);
-  };
-
   const logout = async (): Promise<void> => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -208,7 +239,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     loading,
     login,
-    testLogin,
+    signUp,
     logout,
     isAuthenticated: !!user,
   };
