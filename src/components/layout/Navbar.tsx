@@ -126,7 +126,16 @@ const Navbar: React.FC = () => {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={logout}
+                  onClick={async () => {
+                    console.log('Logout button clicked');
+                    try {
+                      await logout();
+                    } catch (error) {
+                      console.error('Logout failed:', error);
+                      // Force redirect even if logout fails
+                      window.location.href = '/';
+                    }
+                  }}
                   className={cn(
                     "flex items-center gap-2",
                     isTransparent ? "text-white hover:bg-white/10" : ""
@@ -197,8 +206,15 @@ const Navbar: React.FC = () => {
                     <span className="font-medium">{user.name}</span>
                   </div>
                   <Button
-                    onClick={() => {
-                      logout();
+                    onClick={async () => {
+                      console.log('Mobile logout button clicked');
+                      try {
+                        await logout();
+                      } catch (error) {
+                        console.error('Mobile logout failed:', error);
+                        // Force redirect even if logout fails
+                        window.location.href = '/';
+                      }
                       closeMenu();
                     }}
                     variant="outline"

@@ -226,13 +226,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async (): Promise<void> => {
     try {
+      console.log('Logout initiated...');
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      console.log('Supabase signOut successful');
       setUser(null);
+      
       // Redirect to home page after logout
+      console.log('Redirecting to home page...');
       window.location.href = '/';
     } catch (error) {
       console.error('Error logging out:', error);
+      // Even if there's an error, clear the user state and redirect
+      setUser(null);
+      window.location.href = '/';
     }
   };
 
