@@ -153,7 +153,7 @@ const Navbar: React.FC = () => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link to="/pricing">
+                      <Link to="/billing">
                       <CreditCard className="h-4 w-4 mr-2" />
                       Billing
                       </Link>
@@ -244,7 +244,7 @@ const Navbar: React.FC = () => {
                       </Link>
                     </Button>
                     <Button asChild variant="outline" className="w-full justify-start gap-2 text-sm">
-                      <Link to="/pricing">
+                      <Link to="/billing">
                       <CreditCard className="h-4 w-4" />
                       Billing
                       </Link>

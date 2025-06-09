@@ -12,6 +12,7 @@ import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import Settings from './pages/Settings';
 import Pricing from './pages/Pricing';
+import Billing from './pages/Billing';
 
 // Components
 import Navbar from './components/layout/Navbar';
@@ -41,6 +42,14 @@ function App() {
                 } 
               />
               <Route path="/pricing" element={<Pricing />} />
+              <Route 
+                path="/billing" 
+                element={
+                  <ProtectedRoute>
+                    <Billing />
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="/dashboard" 
                 element={
