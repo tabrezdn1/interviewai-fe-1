@@ -76,7 +76,11 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
 
   // Select appropriate replica based on interview options
   const selectReplica = useCallback((): string | null => {
-    if (replicas.length === 0) return null;
+    // Defensive check to ensure replicas is an array
+    if (!Array.isArray(replicas) || replicas.length === 0) {
+      console.warn('Replicas is not a valid array or is empty:', replicas);
+      return null;
+    }
 
     // For now, select the first available replica
     // In the future, you could implement logic to select based on:
