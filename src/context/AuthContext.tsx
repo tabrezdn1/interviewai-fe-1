@@ -162,7 +162,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     } catch (error: any) {
       console.error('Error signing up:', error);
-      throw new Error(error.error_description || error.message || 'Error during sign up');
+      // Preserve the original error object to maintain error codes
+      throw error;
     } finally {
       setLoading(false);
     }
