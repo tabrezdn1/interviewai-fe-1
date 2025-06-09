@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "npx vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -22,8 +22,8 @@
     "@radix-ui/react-tabs": "^1.0.4",
     "@supabase/supabase-js": "^2.39.7",
     "axios": "^1.6.7",
-    "@daily-co/daily-react": "^0.60.0",
-    "@daily-co/daily-js": "^0.60.0",
+    "@daily-co/daily-react": "0.59.0",
+    "@daily-co/daily-js": "0.59.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "framer-motion": "^11.0.8",
