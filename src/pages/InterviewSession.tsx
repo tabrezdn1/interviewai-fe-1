@@ -55,18 +55,22 @@ const InterviewSession: React.FC = () => {
   const [hasRequestedPermissions, setHasRequestedPermissions] = useState(false);
   
   // Tavus integration
-  const {
-    conversationUrl,
-    connectionStatus,
-    isLoading: videoLoading,
-    error: videoError,
-    isConversationActive
-  } = useTavusVideoMeeting({
+  const tavusVideoMeeting = useTavusVideoMeeting({
     interviewType: interviewData?.interview_types?.type || 'technical',
     participantName: 'AI Interviewer',
     role: interviewData?.role,
     company: interviewData?.company || undefined
   });
+
+  const {
+    conversationUrl,
+    connectionStatus,
+    isLoading: videoLoading,
+    error: videoError
+  } = tavusVideoMeeting;
+  
+  // Derive conversation active state from connection status
+  const isConversationActive = connectionStatus?.status === 'connected';
   
   // Media access for user video/audio
   const {
