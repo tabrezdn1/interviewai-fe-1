@@ -303,3 +303,33 @@ export async function deleteInterview(id: string) {
     return false;
   }
 }
+
+export async function updateInterview(id: string, updates: Partial<{
+  title: string;
+  company: string | null;
+  scheduled_at: string;
+  role: string;
+}>) {
+  try {
+    // Validate UUID format before making database calls
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(id)) {
+      console.warn(`Invalid UUID format for update: ${id}, skipping database update`);
+      return true; // Return success for mock interviews
+    }
+
+    const { data, error } = await supabase
+      .from('interviews')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating interview:', error);
+    return null;
+  }
+}

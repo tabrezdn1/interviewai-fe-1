@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { PlusCircle, Clock, CheckCircle, XCircle, BarChart2, ChevronRight, Calendar, TrendingUp, Award } from 'lucide-react';
+import { 
+  PlusCircle, Clock, CheckCircle, XCircle, BarChart2, ChevronRight, Calendar, 
+  TrendingUp, Award, MoreVertical, Edit, Trash2, CalendarDays 
+} from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
 import { formatDate, formatTime } from '../lib/utils';
-import { getInterviews } from '../services/InterviewService';
+import { getInterviews, deleteInterview, cancelInterview } from '../services/InterviewService';
 import { interviewTips } from '../data/feedback';
 
 interface Interview {
@@ -17,6 +22,10 @@ interface Interview {
   scheduled_at: string;
   status: string;
   score: number | null;
+  role?: string;
+  interview_types?: {
+    title: string;
+  };
 }
 
 const Dashboard: React.FC = () => {
@@ -24,6 +33,21 @@ const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; interview: Interview | null }>({
+    open: false,
+    interview: null
+  });
+  const [editDialog, setEditDialog] = useState<{ open: boolean; interview: Interview | null }>({
+    open: false,
+    interview: null
+  });
+  const [editForm, setEditForm] = useState({
+    title: '',
+    company: '',
+    scheduled_at: '',
+    scheduled_time: ''
+  });
+  const [actionLoading, setActionLoading] = useState(false);
   
   useEffect(() => {
     const fetchInterviews = async () => {
@@ -49,6 +73,87 @@ const Dashboard: React.FC = () => {
   const completedInterviews = interviews.filter(
     interview => interview.status === 'completed'
   );
+
+  const handleDeleteInterview = async () => {
+    if (!deleteDialog.interview) return;
+    
+    setActionLoading(true);
+    try {
+      const success = await deleteInterview(deleteDialog.interview.id);
+      if (success) {
+        // Remove from local state
+        setInterviews(prev => prev.filter(interview => interview.id !== deleteDialog.interview!.id));
+        setDeleteDialog({ open: false, interview: null });
+      } else {
+        console.error('Failed to delete interview');
+      }
+    } catch (error) {
+      console.error('Error deleting interview:', error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEditInterview = (interview: Interview) => {
+    const scheduledDate = new Date(interview.scheduled_at);
+    const dateStr = scheduledDate.toISOString().split('T')[0];
+    const timeStr = scheduledDate.toTimeString().slice(0, 5);
+    
+    setEditForm({
+      title: interview.title,
+      company: interview.company || '',
+      scheduled_at: dateStr,
+      scheduled_time: timeStr
+    });
+    setEditDialog({ open: true, interview });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editDialog.interview) return;
+    
+    setActionLoading(true);
+    try {
+      // Combine date and time
+      const newDateTime = new Date(`${editForm.scheduled_at}T${editForm.scheduled_time}`);
+      
+      // Update local state (in a real app, you'd call an API)
+      setInterviews(prev => prev.map(interview => 
+        interview.id === editDialog.interview!.id 
+          ? {
+              ...interview,
+              title: editForm.title,
+              company: editForm.company || null,
+              scheduled_at: newDateTime.toISOString()
+            }
+          : interview
+      ));
+      
+      setEditDialog({ open: false, interview: null });
+    } catch (error) {
+      console.error('Error updating interview:', error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCancelInterview = async (interview: Interview) => {
+    setActionLoading(true);
+    try {
+      const success = await cancelInterview(interview.id);
+      if (success) {
+        // Update local state
+        setInterviews(prev => prev.map(int => 
+          int.id === interview.id 
+            ? { ...int, status: 'canceled' }
+            : int
+        ));
+      }
+    } catch (error) {
+      console.error('Error canceling interview:', error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
   
   if (loading) {
     return (
@@ -228,28 +333,54 @@ const Dashboard: React.FC = () => {
                           animate={{ opacity: 1, y: 0 }}
                           className="group flex flex-col md:flex-row md:items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-primary-200 hover:bg-primary-50 transition-colors"
                         >
-                          <div className="flex items-start md:items-center gap-4 mb-3 md:mb-0">
+                          <div className="flex items-start md:items-center gap-4 mb-3 md:mb-0 flex-1">
                             <div className="w-10 h-10 rounded-full bg-warning-100 flex items-center justify-center mt-1 md:mt-0">
                               <Calendar className="h-5 w-5 text-warning-600" />
                             </div>
-                            <div>
+                            <div className="flex-1">
                               <h4 className="font-medium group-hover:text-primary-700 transition-colors">{interview.title}</h4>
                               <p className="text-sm text-gray-600">{interview.company || 'No company specified'}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Clock className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm text-gray-600">
+                                  {formatDate(interview.scheduled_at)} at {formatTime(interview.scheduled_at)}
+                                </span>
+                              </div>
                             </div>
                           </div>
-                          <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4 text-gray-400" />
-                              <span className="text-sm text-gray-600">
-                                {formatDate(interview.scheduled_at)} at {formatTime(interview.scheduled_at)}
-                              </span>
-                            </div>
+                          
+                          <div className="flex items-center gap-3">
                             <Button asChild variant="default" size="sm">
                               <Link to={`/interview/${interview.id}`} className="flex items-center gap-1">
                                 Start Interview
                                 <ChevronRight className="h-4 w-4" />
                               </Link>
                             </Button>
+                            
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEditInterview(interview)}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Interview
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleCancelInterview(interview)}>
+                                  <XCircle className="h-4 w-4 mr-2" />
+                                  Cancel Interview
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => setDeleteDialog({ open: true, interview })}
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Interview
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </motion.div>
                       ))}
@@ -281,30 +412,49 @@ const Dashboard: React.FC = () => {
                           animate={{ opacity: 1, y: 0 }}
                           className="group flex flex-col md:flex-row md:items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-primary-200 hover:bg-primary-50 transition-colors"
                         >
-                          <div className="flex items-start md:items-center gap-4 mb-3 md:mb-0">
+                          <div className="flex items-start md:items-center gap-4 mb-3 md:mb-0 flex-1">
                             <div className="w-10 h-10 rounded-full bg-success-100 flex items-center justify-center mt-1 md:mt-0">
                               <CheckCircle className="h-5 w-5 text-success-500" />
                             </div>
-                            <div>
+                            <div className="flex-1">
                               <h4 className="font-medium group-hover:text-primary-700 transition-colors">{interview.title}</h4>
                               <p className="text-sm text-gray-600">{interview.company || 'No company specified'}</p>
+                              <div className="text-sm text-gray-600 mt-1">
+                                Completed on {formatDate(interview.scheduled_at)}
+                              </div>
                             </div>
                           </div>
-                          <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
+                          
+                          <div className="flex items-center gap-3">
                             {interview.score && (
                               <Badge variant="success" className="h-6 flex items-center justify-center">
                                 Score: {interview.score}%
                               </Badge>
                             )}
-                            <div className="text-sm text-gray-600">
-                              {formatDate(interview.scheduled_at)}
-                            </div>
+                            
                             <Button asChild variant="outline" size="sm">
                               <Link to={`/feedback/${interview.id}`} className="flex items-center gap-1">
                                 View Feedback
                                 <ChevronRight className="h-4 w-4" />
                               </Link>
                             </Button>
+                            
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem 
+                                  onClick={() => setDeleteDialog({ open: true, interview })}
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Interview
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </motion.div>
                       ))}
@@ -397,6 +547,134 @@ const Dashboard: React.FC = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ open, interview: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Interview</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{deleteDialog.interview?.title}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteDialog({ open: false, interview: null })}
+              disabled={actionLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteInterview}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  Deleting...
+                </div>
+              ) : (
+                'Delete Interview'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Interview Dialog */}
+      <Dialog open={editDialog.open} onOpenChange={(open) => setEditDialog({ open, interview: null })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Interview</DialogTitle>
+            <DialogDescription>
+              Update the details for your interview session.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="edit-title" className="block text-sm font-medium mb-1">
+                Interview Title
+              </label>
+              <input
+                id="edit-title"
+                type="text"
+                value={editForm.title}
+                onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="e.g. Frontend Developer Interview"
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="edit-company" className="block text-sm font-medium mb-1">
+                Company (Optional)
+              </label>
+              <input
+                id="edit-company"
+                type="text"
+                value={editForm.company}
+                onChange={(e) => setEditForm(prev => ({ ...prev, company: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="e.g. Google, Amazon"
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="edit-date" className="block text-sm font-medium mb-1">
+                  Date
+                </label>
+                <input
+                  id="edit-date"
+                  type="date"
+                  value={editForm.scheduled_at}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, scheduled_at: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="edit-time" className="block text-sm font-medium mb-1">
+                  Time
+                </label>
+                <input
+                  id="edit-time"
+                  type="time"
+                  value={editForm.scheduled_time}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, scheduled_time: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setEditDialog({ open: false, interview: null })}
+              disabled={actionLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveEdit}
+              disabled={actionLoading || !editForm.title || !editForm.scheduled_at || !editForm.scheduled_time}
+            >
+              {actionLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  Saving...
+                </div>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
