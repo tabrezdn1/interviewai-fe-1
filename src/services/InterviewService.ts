@@ -103,6 +103,32 @@ export async function getInterviews(userId: string) {
 
 export async function getInterview(id: string) {
   try {
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(id)) {
+      console.warn(`Invalid UUID format: ${id}, using mock data`);
+      // Return mock interview for invalid UUIDs (like "3")
+      return {
+        id,
+        title: 'Mock Frontend Developer Interview',
+        company: 'Tech Solutions Inc.',
+        role: 'Frontend Developer',
+        interview_types: {
+          type: 'technical',
+          title: 'Technical',
+          description: 'Technical interview questions',
+          icon: 'Code'
+        },
+        difficulty_levels: {
+          value: 'medium',
+          label: 'Medium - Standard interview difficulty'
+        },
+        questions: mockQuestions.technical,
+        duration: 20
+      };
+    }
+
     const { data, error } = await supabase
       .from('interviews')
       .select(`
@@ -123,7 +149,7 @@ export async function getInterview(id: string) {
       ...data,
       questions: questions.length 
         ? questions.map((q) => q.questions) 
-        : mockQuestions[data.interview_types.type]
+        : mockQuestions[data.interview_types.type] || mockQuestions.technical
     };
   } catch (error) {
     console.error('Error fetching interview:', error);
@@ -132,18 +158,33 @@ export async function getInterview(id: string) {
       id,
       title: 'Mock Frontend Developer Interview',
       company: 'Tech Solutions Inc.',
-      interviewer: {
-        name: 'Alex Chen',
-        role: 'Senior Frontend Engineer',
-        avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+      role: 'Frontend Developer',
+      interview_types: {
+        type: 'technical',
+        title: 'Technical',
+        description: 'Technical interview questions',
+        icon: 'Code'
+      },
+      difficulty_levels: {
+        value: 'medium',
+        label: 'Medium - Standard interview difficulty'
       },
       questions: mockQuestions.technical,
+      duration: 20
     };
   }
 }
 
 export async function completeInterview(id: string, responses: any) {
   try {
+    // Validate UUID format before making database calls
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(id)) {
+      console.warn(`Invalid UUID format for completion: ${id}, skipping database update`);
+      return true; // Return success for mock interviews
+    }
+
     // Update interview status to completed
     const { error: updateError } = await supabase
       .from('interviews')

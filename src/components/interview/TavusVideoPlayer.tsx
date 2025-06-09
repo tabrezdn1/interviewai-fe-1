@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader2, AlertCircle, Volume2, VolumeX } from 'lucide-react';
+import { Loader2, AlertCircle, Volume2, VolumeX, Video } from 'lucide-react';
 import { Button } from '../ui/button';
 
 interface TavusVideoPlayerProps {
@@ -81,6 +81,51 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
           <p className="text-gray-300 text-sm">
             Setting up your personalized interview experience
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if this is a mock conversation URL
+  const isMockConversation = conversationUrl.includes('mock-conversation');
+
+  if (isMockConversation) {
+    return (
+      <div className={`relative bg-gray-800 rounded-xl overflow-hidden ${className}`}>
+        {/* Mock AI Interviewer Video */}
+        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-900">
+          <div className="text-center text-white p-8">
+            <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <Video className="h-12 w-12 text-white" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">AI Interviewer</h3>
+            <p className="text-blue-200 text-sm mb-4">Ready to conduct your interview</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 rounded-full text-green-300 text-xs">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              Live
+            </div>
+          </div>
+        </div>
+        
+        {/* Video Controls Overlay */}
+        <div className="absolute top-4 right-4 flex gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={toggleMute}
+            className="bg-black/50 hover:bg-black/70 text-white border-0"
+          >
+            {isMuted ? (
+              <VolumeX className="h-4 w-4" />
+            ) : (
+              <Volume2 className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+
+        {/* Mock conversation indicator */}
+        <div className="absolute bottom-4 left-4 px-3 py-1 bg-yellow-500/20 rounded-full text-yellow-300 text-xs">
+          Demo Mode
         </div>
       </div>
     );

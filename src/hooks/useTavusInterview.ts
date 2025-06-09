@@ -31,18 +31,43 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       // Check if Tavus API key is configured
       const apiKey = import.meta.env.VITE_TAVUS_API_KEY;
       if (!apiKey || apiKey === 'your_tavus_api_key_here') {
-        console.warn('Tavus API key not configured. AI interviews will not be available.');
-        setError('AI interviews are not configured. Please contact support.');
+        console.warn('Tavus API key not configured. Using mock AI interviewer.');
+        // Create a mock replica for development
+        setReplicas([{
+          replica_id: 'mock-replica-123',
+          replica_name: 'AI Interviewer',
+          status: 'ready',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          visibility: 'private'
+        }]);
         return;
       }
 
       try {
+        setIsLoading(true);
         const tavusAPI = getTavusAPI();
         const replicaList = await tavusAPI.getReplicas();
         setReplicas(replicaList);
+        
+        if (replicaList.length === 0) {
+          setError('No AI interviewers available. Please contact support.');
+        }
       } catch (err) {
         console.error('Failed to load Tavus replicas:', err);
         setError(err instanceof Error ? err.message : 'Failed to load AI interviewers');
+        
+        // Fallback to mock replica if API fails
+        setReplicas([{
+          replica_id: 'mock-replica-123',
+          replica_name: 'AI Interviewer (Demo)',
+          status: 'ready',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          visibility: 'private'
+        }]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -70,6 +95,21 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       const replicaId = selectReplica();
       if (!replicaId) {
         throw new Error('No AI interviewer available. Please try again later.');
+      }
+
+      // Check if this is a mock replica
+      if (replicaId === 'mock-replica-123') {
+        // Create a mock conversation for development
+        const mockConversation: TavusConversationResponse = {
+          conversation_id: 'mock-conversation-123',
+          conversation_url: 'https://tavus.io/conversations/mock-conversation-123',
+          status: 'active',
+          created_at: new Date().toISOString()
+        };
+        
+        setConversation(mockConversation);
+        setIsConversationActive(true);
+        return;
       }
 
       const tavusAPI = getTavusAPI();
@@ -104,6 +144,13 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
 
     setIsLoading(true);
     try {
+      // Check if this is a mock conversation
+      if (conversation.conversation_id === 'mock-conversation-123') {
+        setConversation(null);
+        setIsConversationActive(false);
+        return;
+      }
+
       const tavusAPI = getTavusAPI();
       await tavusAPI.endConversation(conversation.conversation_id);
       setConversation(null);
