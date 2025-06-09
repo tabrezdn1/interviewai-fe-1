@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Mic, MicOff, Video, VideoOff, MessageSquare, 
-  Clock, X, AlertCircle, PauseCircle, PlayCircle, Settings, ChevronRight, Users
+  Clock, X, AlertCircle, PauseCircle, PlayCircle, Settings, ChevronRight, Users, Code
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { getInterview, completeInterview } from '../services/InterviewService';
