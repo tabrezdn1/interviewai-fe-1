@@ -7,7 +7,7 @@ import {
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { useTavusVideoMeeting } from '../../hooks/useTavusVideoMeeting';
+import { useDailyVideoCall } from '../../hooks/useDailyVideoCall';
 
 interface VideoInterviewSetupProps {
   interviewType: string;
@@ -37,13 +37,11 @@ const VideoInterviewSetup: React.FC<VideoInterviewSetupProps> = ({
 
   const {
     conversationUrl,
-    connectionStatus,
+    isConnected,
     isLoading,
     error,
-    startMeeting,
-    checkPermissions,
-    testConnection
-  } = useTavusVideoMeeting({
+    startCall
+  } = useDailyVideoCall({
     interviewType,
     participantName,
     role,
@@ -72,7 +70,15 @@ const VideoInterviewSetup: React.FC<VideoInterviewSetupProps> = ({
   const checkDevicePermissions = async () => {
     setIsChecking(true);
     try {
-      const permissions = await checkPermissions();
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
+      });
+      
+      // Stop the stream immediately after checking
+      stream.getTracks().forEach(track => track.stop());
+      
+      const permissions = { camera: true, microphone: true };
       setPermissionStatus(permissions);
       
       if (permissions.camera || permissions.microphone) {
@@ -81,10 +87,22 @@ const VideoInterviewSetup: React.FC<VideoInterviewSetupProps> = ({
       }
     } catch (error) {
       console.error('Permission check failed:', error);
+      
+      let errorMessage = 'Failed to access camera and microphone';
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          errorMessage = 'Camera and microphone access denied. Please allow permissions.';
+        } else if (error.name === 'NotFoundError') {
+          errorMessage = 'No camera or microphone found.';
+        } else if (error.name === 'NotSupportedError') {
+          errorMessage = 'Camera and microphone not supported in this browser.';
+        }
+      }
+      
       setPermissionStatus({ 
         camera: false, 
         microphone: false, 
-        error: 'Failed to check permissions' 
+        error: errorMessage 
       });
     } finally {
       setIsChecking(false);
@@ -93,7 +111,18 @@ const VideoInterviewSetup: React.FC<VideoInterviewSetupProps> = ({
 
   const testConnectionQuality = async () => {
     try {
-      const quality = await testConnection();
+      const startTime = Date.now();
+      
+      // Simple ping test to estimate latency
+      await fetch(window.location.origin, { method: 'HEAD' });
+      
+      const latency = Date.now() - startTime;
+      
+      let quality: 'poor' | 'fair' | 'good' | 'excellent' = 'excellent';
+      if (latency > 200) quality = 'good';
+      if (latency > 500) quality = 'fair';
+      if (latency > 1000) quality = 'poor';
+      
       setConnectionQuality(quality);
       setSetupStep('ready');
     } catch (error) {
@@ -105,7 +134,7 @@ const VideoInterviewSetup: React.FC<VideoInterviewSetupProps> = ({
 
   const handleStartInterview = async () => {
     try {
-      await startMeeting();
+      await startCall();
     } catch (error) {
       console.error('Failed to start interview:', error);
     }

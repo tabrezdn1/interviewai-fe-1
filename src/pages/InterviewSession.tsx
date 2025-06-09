@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useTavusVideoMeeting } from '../hooks/useTavusVideoMeeting';
+import { DailyProvider } from '@daily-co/daily-react';
+import { useDailyVideoCall } from '../hooks/useDailyVideoCall';
 import { 
   Mic, MicOff, Video, VideoOff, MessageSquare, Shield,
   Clock, X, AlertCircle, PauseCircle, PlayCircle, Settings, ChevronRight, Users, Code
@@ -10,7 +11,7 @@ import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { getInterview, completeInterview } from '../services/InterviewService';
 import { useMediaAccess } from '../hooks/useMediaAccess';
-import TavusVideoMeeting from '../components/interview/TavusVideoMeeting';
+import TavusVideoCall from '../components/interview/TavusVideoCall';
 import VideoInterviewSetup from '../components/interview/VideoInterviewSetup';
 import UserVideoFeed from '../components/interview/UserVideoFeed';
 import AudioVisualizer from '../components/interview/AudioVisualizer';
@@ -38,7 +39,7 @@ interface InterviewData {
   duration: number;
 }
 
-const InterviewSession: React.FC = () => {
+const InterviewSessionContent: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
@@ -54,23 +55,23 @@ const InterviewSession: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [hasRequestedPermissions, setHasRequestedPermissions] = useState(false);
   
-  // Tavus integration
-  const tavusVideoMeeting = useTavusVideoMeeting({
+  // Daily video call integration
+  const {
+    conversationUrl,
+    isLoading: videoLoading,
+    error: videoError,
+    isConnected,
+    endCall,
+    dailyCall
+  } = useDailyVideoCall({
     interviewType: interviewData?.interview_types?.type || 'technical',
     participantName: 'AI Interviewer',
     role: interviewData?.role,
     company: interviewData?.company || undefined
   });
 
-  const {
-    conversationUrl,
-    connectionStatus,
-    isLoading: videoLoading,
-    error: videoError
-  } = tavusVideoMeeting;
-  
-  // Derive conversation active state from connection status
-  const isConversationActive = connectionStatus?.status === 'connected';
+  // Use isConnected from Daily call
+  const isConversationActive = isConnected;
   
   // Media access for user video/audio
   const {
@@ -581,6 +582,14 @@ const InterviewSession: React.FC = () => {
         </DialogContent>
       </Dialog>
     </div>
+  );
+};
+// Main component wrapped with DailyProvider
+const InterviewSession: React.FC = () => {
+  return (
+    <DailyProvider>
+      <InterviewSessionContent />
+    </DailyProvider>
   );
 };
 

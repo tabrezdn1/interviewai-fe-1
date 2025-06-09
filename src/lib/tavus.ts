@@ -256,22 +256,26 @@ class TavusAPI {
         throw new Error('persona_id is required for Tavus conversation');
       }
 
-      // Set default properties
-      const defaultRequest = {
-        ...request,
+      // Create conversation request with proper properties for Daily.co integration
+      const conversationRequest = {
+        replica_id: request.replica_id,
+        persona_id: request.persona_id,
+        conversation_name: request.conversation_name,
+        callback_url: request.callback_url,
         properties: {
-          max_call_duration: 3600,
-          participant_left_timeout: 60,
-          participant_absent_timeout: 60,
-          enable_recording: true,
-          enable_transcription: true,
-          language: 'English',
-        },
+          max_call_duration: request.properties?.max_call_duration || 3600,
+          participant_left_timeout: request.properties?.participant_left_timeout || 60,
+          participant_absent_timeout: request.properties?.participant_absent_timeout || 60,
+          enable_recording: request.properties?.enable_recording ?? true,
+          enable_transcription: request.properties?.enable_transcription ?? true,
+          language: request.properties?.language || 'English',
+          apply_greenscreen: true, // Enable green screen for chroma key effect
+        }
       };
       
       const response = await this.makeRequest<TavusConversationResponse>('/v2/conversations', {
         method: 'POST',
-        body: JSON.stringify(defaultRequest),
+        body: JSON.stringify(conversationRequest),
       });
       
       return {
