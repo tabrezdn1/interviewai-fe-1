@@ -98,9 +98,7 @@ export const useTavusVideoMeeting = (options: UseTavusVideoMeetingOptions): UseT
           participant_absent_timeout: 60,
           enable_recording: true,
           enable_transcription: true,
-          language: 'en',
-          video_quality: 'high',
-          audio_quality: 'high'
+          language: 'en'
         }
       };
 

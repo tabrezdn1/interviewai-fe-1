@@ -18,8 +18,6 @@ export interface TavusConversationConfig {
     enable_recording?: boolean;
     enable_transcription?: boolean;
     language?: string;
-    video_quality?: 'low' | 'medium' | 'high';
-    audio_quality?: 'low' | 'medium' | 'high';
   };
 }
 
