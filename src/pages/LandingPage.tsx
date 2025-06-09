@@ -45,7 +45,12 @@ const LandingPage: React.FC = () => {
       <section className="min-h-screen flex items-center relative overflow-hidden">
         {/* Badge in top right corner */}
         <div className="fixed top-20 right-4 z-40 sm:top-6 sm:right-6 md:top-20 md:right-6 lg:top-20 lg:right-8">
-          <div className="relative group">
+          <a 
+            href="https://bolt.new/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="relative group block"
+          >
             {/* Glow effect behind badge */}
             <div className="absolute -inset-2 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             
@@ -66,7 +71,7 @@ const LandingPage: React.FC = () => {
                 <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
               </div>
             </div>
-          </div>
+          </a>
         </div>
         
         <div className="absolute inset-0 bg-gradient-to-r from-primary-900 to-accent dark:from-gray-950 dark:to-gray-900 z-0"></div>
