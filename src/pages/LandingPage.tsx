@@ -43,6 +43,32 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="min-h-screen flex items-center relative overflow-hidden">
+        {/* Badge in top right corner */}
+        <div className="fixed top-4 right-4 z-50 md:top-6 md:right-6 lg:top-8 lg:right-8">
+          <div className="relative group">
+            {/* Glow effect behind badge */}
+            <div className="absolute -inset-2 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            
+            {/* Badge container with modern styling */}
+            <div className="relative bg-white/90 backdrop-blur-md rounded-full p-2 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <img 
+                src="/white_circle_360x360.png" 
+                alt="Powered by Bolt.new" 
+                className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 object-contain rounded-full"
+                loading="lazy"
+              />
+            </div>
+            
+            {/* Tooltip on hover */}
+            <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <div className="bg-gray-900 text-white text-xs px-3 py-1 rounded-lg whitespace-nowrap">
+                Powered by Bolt.new
+                <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div className="absolute inset-0 bg-gradient-to-r from-primary-900 to-accent dark:from-gray-950 dark:to-gray-900 z-0"></div>
         <div 
           className="absolute inset-0 opacity-10 z-0"
