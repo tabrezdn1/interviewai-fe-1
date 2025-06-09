@@ -292,7 +292,7 @@ const Dashboard: React.FC = () => {
                           </div>
                           <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-6">
                             {interview.score && (
-                              <Badge variant="success\" className=\"h-6 flex items-center justify-center">
+                              <Badge variant="success" className="h-6 flex items-center justify-center">
                                 Score: {interview.score}%
                               </Badge>
                             )}
