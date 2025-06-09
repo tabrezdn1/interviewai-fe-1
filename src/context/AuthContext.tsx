@@ -17,6 +17,7 @@ interface AuthContextType {
     credentials?: { email: string; password: string },
     options?: { redirectTo?: string }
   ) => Promise<void>;
+  testLogin: () => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -26,6 +27,7 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   login: async () => {},
+  testLogin: async () => {},
   logout: async () => {},
   isAuthenticated: false,
 });
@@ -177,6 +179,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const testLogin = async (): Promise<void> => {
+    // Create a fake user for testing
+    const testUser: UserProfile = {
+      id: 'test-user-123',
+      name: 'Test User',
+      email: 'test@example.com',
+      avatar: 'https://randomuser.me/api/portraits/men/32.jpg'
+    };
+    
+    setUser(testUser);
+    setLoading(false);
+  };
+
   const logout = async (): Promise<void> => {
     try {
       const { error } = await supabase.auth.signOut();
@@ -193,6 +208,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     loading,
     login,
+    testLogin,
     logout,
     isAuthenticated: !!user,
   };

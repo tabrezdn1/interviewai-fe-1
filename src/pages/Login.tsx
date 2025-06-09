@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MessageSquare, Github } from 'lucide-react';
+import { MessageSquare, Github, TestTube } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
@@ -12,9 +12,12 @@ const Login: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   
-  const { login, isAuthenticated, loading } = useAuth();
+  const { login, testLogin, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Check if we're in development mode
+  const isDevelopment = import.meta.env.DEV || window.location.hostname === 'localhost' || window.location.hostname.includes('bolt.new');
   
   // Check if the URL has signup parameter
   useEffect(() => {
@@ -47,6 +50,20 @@ const Login: React.FC = () => {
       console.error('Login failed:', error);
       setError('Authentication failed. Please try again.');
       setIsRedirecting(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const handleTestLogin = async () => {
+    try {
+      setError(null);
+      setIsSubmitting(true);
+      await testLogin();
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Test login failed:', error);
+      setError('Test login failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -99,6 +116,28 @@ const Login: React.FC = () => {
             )}
             
             <div className="space-y-4">
+              {isDevelopment && (
+                <>
+                  <Button
+                    onClick={handleTestLogin}
+                    className="w-full justify-center gap-3 bg-orange-600 hover:bg-orange-700 text-white"
+                    disabled={isSubmitting}
+                  >
+                    <TestTube className="h-5 w-5" />
+                    {isSubmitting ? 'Logging in...' : 'Test Login (Dev Only)'}
+                  </Button>
+                  
+                  <div className="relative py-3">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-border"></div>
+                    </div>
+                    <div className="relative flex justify-center">
+                      <span className="bg-card px-4 text-sm text-muted-foreground">Or use OAuth</span>
+                    </div>
+                  </div>
+                </>
+              )}
+              
               <Button
                 onClick={() => handleOAuthLogin('google')}
                 variant="outline"
