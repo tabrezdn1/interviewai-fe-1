@@ -3,10 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Mic, MicOff, Video, VideoOff, MessageSquare, 
-  Clock, X, AlertCircle, PauseCircle, PlayCircle
+  Clock, X, AlertCircle, PauseCircle, PlayCircle, Settings
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { getInterview, completeInterview } from '../services/InterviewService';
+import { useTavusInterview } from '../hooks/useTavusInterview';
+import TavusVideoPlayer from '../components/interview/TavusVideoPlayer';
 
 interface Question {
   id: number;
@@ -18,16 +20,17 @@ interface InterviewData {
   id: string;
   title: string;
   company?: string | null;
+  role: string;
   interview_types?: {
     type: string;
     title: string;
   };
-  interviewer?: {
-    name: string;
-    role: string;
-    avatar: string;
+  difficulty_levels?: {
+    value: string;
+    label: string;
   };
   questions: Question[];
+  duration: number;
 }
 
 const InterviewSession: React.FC = () => {
@@ -43,6 +46,19 @@ const InterviewSession: React.FC = () => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(1200); // 20 minutes in seconds
   const [responses, setResponses] = useState<Record<number, string>>({});
+  const [showSettings, setShowSettings] = useState(false);
+  
+  // Tavus integration
+  const {
+    conversation,
+    isLoading: tavusLoading,
+    error: tavusError,
+    startConversation,
+    endConversation,
+    isConversationActive
+  } = useTavusInterview({
+    autoStart: false // We'll start manually after loading interview data
+  });
   
   // Format time as MM:SS
   const formatTime = (seconds: number) => {
@@ -68,79 +84,92 @@ const InterviewSession: React.FC = () => {
       } catch (error) {
         console.error('Error fetching interview data:', error);
       } finally {
-        // Simulate a minimum loading time for better UX
-        setTimeout(() => {
-          setLoading(false);
-        }, 1500);
+        setLoading(false);
       }
     };
     
     fetchInterviewData();
   }, [id]);
+
+  // Start Tavus conversation when interview data is loaded
+  useEffect(() => {
+    if (interviewData && !conversation && !tavusLoading && !loading) {
+      startConversation();
+    }
+  }, [interviewData, conversation, tavusLoading, loading, startConversation]);
   
   // Timer countdown
   useEffect(() => {
-    if (!loading && !isPaused && timeRemaining > 0) {
+    if (!loading && !isPaused && timeRemaining > 0 && isConversationActive) {
       const timer = setInterval(() => {
         setTimeRemaining(prev => prev - 1);
       }, 1000);
       
       return () => clearInterval(timer);
     }
-  }, [loading, isPaused, timeRemaining]);
+  }, [loading, isPaused, timeRemaining, isConversationActive]);
   
   const handleNextQuestion = async () => {
     if (!interviewData) return;
     
     // Save the response for the current question
-    // In a real app, you would save the actual speech transcript
     setResponses(prev => ({
       ...prev,
-      [currentQuestion]: `Mock response for question ${currentQuestion + 1}`
+      [currentQuestion]: `Response for question ${currentQuestion + 1}`
     }));
     
     if (currentQuestion < interviewData.questions.length - 1) {
       setCurrentQuestion(prev => prev + 1);
     } else {
       // Last question, complete the interview
-      try {
-        if (id) {
-          // Prepare mock feedback data
-          const feedbackData = {
-            overallScore: Math.floor(Math.random() * 30) + 70, // Random score between 70-100
-            questions: Object.entries(responses).map(([qIndex, response]) => {
-              const questionIndex = Number(qIndex);
-              const question = interviewData.questions[questionIndex];
-              return {
-                id: question.id,
-                text: question.text,
-                answer: response,
-                score: Math.floor(Math.random() * 30) + 70,
-                analysis: "The candidate showed good understanding of the topic.",
-                feedback: "Consider providing more concrete examples next time."
-              };
-            }),
-            feedback: {
-              summary: "Overall good performance with room for improvement in specific areas.",
-              overallScore: Math.floor(Math.random() * 30) + 70,
-              strengths: ["Clear communication", "Good technical knowledge", "Structured answers"],
-              improvements: ["More detailed examples", "Deeper technical explanations"],
-              skillAssessment: {
-                technical: { score: Math.floor(Math.random() * 30) + 70, feedback: "Good technical foundation." },
-                communication: { score: Math.floor(Math.random() * 30) + 70, feedback: "Clear communication skills." },
-                problemSolving: { score: Math.floor(Math.random() * 30) + 70, feedback: "Solid problem-solving approach." },
-                experience: { score: Math.floor(Math.random() * 30) + 70, feedback: "Good experience demonstration." }
-              }
-            }
-          };
-          
-          await completeInterview(id, feedbackData);
-          navigate(`/feedback/${id}`);
-        }
-      } catch (error) {
-        console.error('Error completing interview:', error);
-        navigate(`/feedback/${id}`); // Navigate anyway for demo purposes
+      await handleCompleteInterview();
+    }
+  };
+
+  const handleCompleteInterview = async () => {
+    try {
+      // End Tavus conversation
+      if (conversation) {
+        await endConversation();
       }
+
+      if (id && interviewData) {
+        // Prepare mock feedback data
+        const feedbackData = {
+          overallScore: Math.floor(Math.random() * 30) + 70,
+          questions: Object.entries(responses).map(([qIndex, response]) => {
+            const questionIndex = Number(qIndex);
+            const question = interviewData.questions[questionIndex];
+            return {
+              id: question.id,
+              text: question.text,
+              answer: response,
+              score: Math.floor(Math.random() * 30) + 70,
+              analysis: "The candidate showed good understanding of the topic.",
+              feedback: "Consider providing more concrete examples next time."
+            };
+          }),
+          feedback: {
+            summary: "Overall good performance with room for improvement in specific areas.",
+            overallScore: Math.floor(Math.random() * 30) + 70,
+            strengths: ["Clear communication", "Good technical knowledge", "Structured answers"],
+            improvements: ["More detailed examples", "Deeper technical explanations"],
+            skillAssessment: {
+              technical: { score: Math.floor(Math.random() * 30) + 70, feedback: "Good technical foundation." },
+              communication: { score: Math.floor(Math.random() * 30) + 70, feedback: "Clear communication skills." },
+              problemSolving: { score: Math.floor(Math.random() * 30) + 70, feedback: "Solid problem-solving approach." },
+              experience: { score: Math.floor(Math.random() * 30) + 70, feedback: "Good experience demonstration." }
+            }
+          }
+        };
+        
+        await completeInterview(id, feedbackData);
+      }
+      
+      navigate(`/feedback/${id}`);
+    } catch (error) {
+      console.error('Error completing interview:', error);
+      navigate(`/feedback/${id}`); // Navigate anyway for demo purposes
     }
   };
   
@@ -156,11 +185,22 @@ const InterviewSession: React.FC = () => {
     setVideoEnabled(!videoEnabled);
   };
   
-  const confirmExit = () => {
+  const confirmExit = async () => {
+    if (conversation) {
+      await endConversation();
+    }
     navigate('/dashboard');
   };
+
+  const handleTavusVideoReady = () => {
+    console.log('Tavus video is ready');
+  };
+
+  const handleTavusVideoError = (error: string) => {
+    console.error('Tavus video error:', error);
+  };
   
-  if (loading || !interviewData) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-white mb-6"></div>
@@ -169,13 +209,19 @@ const InterviewSession: React.FC = () => {
       </div>
     );
   }
-  
-  // Mock interviewer data if not provided by the API
-  const interviewer = interviewData.interviewer || {
-    name: 'Alex Chen',
-    role: 'Senior Frontend Engineer',
-    avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-  };
+
+  if (!interviewData) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white">
+        <AlertCircle className="h-16 w-16 text-red-500 mb-4" />
+        <h2 className="text-2xl font-semibold mb-2">Interview Not Found</h2>
+        <p className="text-gray-400 mb-6">The interview session could not be loaded.</p>
+        <Button onClick={() => navigate('/dashboard')}>
+          Return to Dashboard
+        </Button>
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -215,49 +261,50 @@ const InterviewSession: React.FC = () => {
                 <PauseCircle className="h-5 w-5" />
               )}
             </button>
+
+            <button
+              onClick={() => setShowSettings(true)}
+              className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+              aria-label="Settings"
+            >
+              <Settings className="h-5 w-5" />
+            </button>
           </div>
         </div>
       </div>
       
       <div className="pt-16 pb-24 min-h-screen flex flex-col">
         <div className="flex-1 container-custom mx-auto flex flex-col md:flex-row gap-4 p-4">
-          {/* Video area */}
-          <div className="md:w-2/3 bg-gray-800 rounded-xl overflow-hidden relative">
-            {videoEnabled ? (
-              <div 
-                className="w-full h-full min-h-[400px]"
-                style={{
-                  backgroundImage: `url(${interviewer.avatar})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                }}
-              ></div>
-            ) : (
-              <div className="w-full h-full min-h-[400px] flex items-center justify-center bg-gray-700">
-                <div className="text-center">
-                  <VideoOff className="h-12 w-12 text-gray-500 mx-auto mb-3" />
-                  <p className="text-gray-400">Video is disabled</p>
-                </div>
-              </div>
-            )}
+          {/* Video area with Tavus integration */}
+          <div className="md:w-2/3 relative">
+            <TavusVideoPlayer
+              conversationUrl={conversation?.conversation_url}
+              isLoading={tavusLoading || !conversation}
+              error={tavusError || undefined}
+              onVideoReady={handleTavusVideoReady}
+              onVideoError={handleTavusVideoError}
+              className="w-full h-full min-h-[400px]"
+            />
             
-            {/* Interviewer info */}
-            <div className="absolute bottom-4 left-4 flex items-center gap-3 bg-gray-900 bg-opacity-75 p-2 rounded-lg">
-              <img 
-                src={interviewer.avatar} 
-                alt={interviewer.name} 
-                className="w-10 h-10 rounded-full object-cover"
-              />
+            {/* Interview info overlay */}
+            <div className="absolute bottom-4 left-4 flex items-center gap-3 bg-gray-900 bg-opacity-75 p-3 rounded-lg">
+              <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center">
+                <MessageSquare className="h-5 w-5 text-white" />
+              </div>
               <div>
-                <p className="font-medium">{interviewer.name}</p>
-                <p className="text-sm text-gray-400">{interviewer.role}</p>
+                <p className="font-medium">AI Interviewer</p>
+                <p className="text-sm text-gray-400">
+                  {interviewData.interview_types?.title || 'General'} Interview
+                </p>
               </div>
             </div>
             
-            {/* Self video */}
+            {/* Self video placeholder */}
             <div className="absolute top-4 right-4 w-32 h-24 bg-gray-700 rounded-lg overflow-hidden shadow-lg border border-gray-600">
               {videoEnabled ? (
-                <div className="w-full h-full bg-gray-800"></div>
+                <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                  <span className="text-xs text-gray-400">Your Video</span>
+                </div>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <VideoOff className="h-6 w-6 text-gray-500" />
@@ -296,10 +343,10 @@ const InterviewSession: React.FC = () => {
                 className="mb-6"
               >
                 <p className="text-lg mb-4">
-                  {interviewData.questions[currentQuestion].text}
+                  {interviewData.questions[currentQuestion]?.text}
                 </p>
                 
-                {interviewData.questions[currentQuestion].hint && (
+                {interviewData.questions[currentQuestion]?.hint && (
                   <div className="bg-gray-700 p-3 rounded-lg flex items-start gap-3">
                     <AlertCircle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-gray-300">
@@ -380,6 +427,7 @@ const InterviewSession: React.FC = () => {
           <Button
             onClick={handleNextQuestion}
             className="btn-primary"
+            disabled={!isConversationActive}
           >
             {currentQuestion < interviewData.questions.length - 1 ? 'Next Question' : 'Finish Interview'}
           </Button>
