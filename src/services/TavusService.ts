@@ -57,7 +57,7 @@ class TavusService {
           participant_absent_timeout: config.properties?.participant_absent_timeout || 60,
           enable_recording: config.properties?.enable_recording ?? true,
           enable_transcription: config.properties?.enable_transcription ?? true,
-          language: config.properties?.language || 'en',
+          language: config.properties?.language || 'English',
           ...config.properties
         }
       };
