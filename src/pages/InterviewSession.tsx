@@ -292,6 +292,7 @@ const InterviewSession: React.FC = () => {
               onVideoReady={handleTavusVideoReady}
               onVideoError={handleTavusVideoError}
               className="w-full h-full min-h-[400px]"
+              isMockMode={isMockMode}
             />
             
             {/* Interview info overlay */}
