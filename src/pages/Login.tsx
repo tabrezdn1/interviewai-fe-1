@@ -77,7 +77,15 @@ const Login: React.FC = () => {
       navigate('/dashboard');
     } catch (error: any) {
       console.error('Sign up failed:', error);
-      setError(error.message || 'Registration failed. Please try again.');
+      
+      // Handle specific error cases
+      if (error.code === 'user_already_exists' || error.message?.includes('User already registered')) {
+        setError('This email is already registered. Please sign in instead.');
+        // Automatically switch to sign-in mode to help the user
+        setIsSignUp(false);
+      } else {
+        setError(error.error_description || error.message || 'Registration failed. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
