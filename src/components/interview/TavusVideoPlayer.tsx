@@ -170,7 +170,7 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
             )}
             
             <div className="text-xs text-blue-300">
-              Demo Mode - Add your Tavus API key to enable real AI video
+              {isMockMode ? 'Demo Mode - Add your Tavus API key to enable real AI video' : 'Demo Mode - Check Tavus configuration'}
             </div>
           </div>
         </div>

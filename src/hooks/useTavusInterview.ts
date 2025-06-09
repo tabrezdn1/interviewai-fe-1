@@ -60,7 +60,10 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       setAvailableRounds(rounds);
       console.log('Available rounds:', rounds);
 
-      if (!isTavusConfigured()) {
+      const isConfigured = isTavusConfigured();
+      console.log('Tavus configuration status:', isConfigured);
+      
+      if (!isConfigured) {
         console.warn('Tavus API key not configured or missing replica/persona IDs. Using mock AI interviewer.');
         setIsMockMode(true);
         
@@ -87,6 +90,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
         return;
       }
 
+      console.log('Tavus is properly configured, attempting to fetch real data...');
       try {
         setIsLoading(true);
         const tavusAPI = getTavusAPI();
