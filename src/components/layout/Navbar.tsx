@@ -77,22 +77,22 @@ const Navbar: React.FC = () => {
 
         {/* Tab-style navigation for landing page */}
         {isHome && !user && (
-          <div className="hidden md:flex items-center gap-1 bg-white/10 backdrop-blur-md rounded-full p-1">
+          <div className="hidden md:flex items-center gap-1 bg-white/20 backdrop-blur-md rounded-full p-1 border border-white/30">
             <button
               onClick={() => scrollToSection('features')}
-              className="px-4 py-2 rounded-full text-white/90 hover:text-white hover:bg-white/20 transition-all text-sm font-medium"
+              className="px-4 py-2 rounded-full text-white hover:text-white hover:bg-white/30 transition-all text-sm font-medium shadow-sm"
             >
               Features
             </button>
             <button
               onClick={() => scrollToSection('pricing')}
-              className="px-4 py-2 rounded-full text-white/90 hover:text-white hover:bg-white/20 transition-all text-sm font-medium"
+              className="px-4 py-2 rounded-full text-white hover:text-white hover:bg-white/30 transition-all text-sm font-medium shadow-sm"
             >
               Pricing
             </button>
             <button
               onClick={() => scrollToSection('about')}
-              className="px-4 py-2 rounded-full text-white/90 hover:text-white hover:bg-white/20 transition-all text-sm font-medium"
+              className="px-4 py-2 rounded-full text-white hover:text-white hover:bg-white/30 transition-all text-sm font-medium shadow-sm"
             >
               About
             </button>
@@ -248,19 +248,19 @@ const Navbar: React.FC = () => {
                   <>
                     <button
                       onClick={() => scrollToSection('features')}
-                      className="py-2 px-4 font-medium text-foreground text-left"
+                      className="py-2 px-4 font-medium text-foreground text-left hover:bg-gray-100 rounded-md transition-colors"
                     >
                       Features
                     </button>
                     <button
                       onClick={() => scrollToSection('pricing')}
-                      className="py-2 px-4 font-medium text-foreground text-left"
+                      className="py-2 px-4 font-medium text-foreground text-left hover:bg-gray-100 rounded-md transition-colors"
                     >
                       Pricing
                     </button>
                     <button
                       onClick={() => scrollToSection('about')}
-                      className="py-2 px-4 font-medium text-foreground text-left"
+                      className="py-2 px-4 font-medium text-foreground text-left hover:bg-gray-100 rounded-md transition-colors"
                     >
                       About
                     </button>

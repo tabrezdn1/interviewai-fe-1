@@ -409,16 +409,11 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-32 bg-muted/30 relative overflow-hidden">
+      <section className="py-32 bg-gray-50 relative overflow-hidden">
         {/* Background pattern */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent"></div>
-          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent"></div>
-          <div className="grid grid-cols-12 h-full w-full">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="h-full border-r border-gray-200 dark:border-gray-800 last:border-r-0"></div>
-            ))}
-          </div>
+        <div className="absolute inset-0 z-0 opacity-30">
+          <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
         </div>
         
         <div className="container mx-auto px-4 relative z-10">
@@ -433,7 +428,7 @@ const LandingPage: React.FC = () => {
                 <Compass className="h-4 w-4" />
                 <span>Simple Process</span>
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-heading">How It Works</h2>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-heading text-gray-900">How It Works</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Prepare for your next interview in three simple steps
               </p>
@@ -797,19 +792,19 @@ const ProcessCard: React.FC<ProcessCardProps> = ({ number, title, description })
       transition={{ duration: 0.5 }}
       className="relative"
     >
-      {/* Connection line */}
-      <div className="hidden md:block absolute top-10 left-1/2 w-full h-1 bg-muted -z-10"></div>
+      {/* Connection line - improved visibility */}
+      <div className="hidden md:block absolute top-10 left-1/2 w-full h-1 bg-gray-200 -z-10 rounded-full"></div>
       
       <div className="flex flex-col items-center text-center">
         <div className="relative mb-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xl font-bold">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white text-xl font-bold shadow-lg">
             {number}
           </div>
           {/* Animated pulse effect */}
-          <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse-slow"></div>
+          <div className="absolute inset-0 rounded-full bg-primary/30 animate-pulse-slow"></div>
         </div>
-        <h3 className="text-xl font-semibold mb-2">{title}</h3>
-        <p className="text-muted-foreground">{description}</p>
+        <h3 className="text-xl font-semibold mb-2 text-gray-900">{title}</h3>
+        <p className="text-gray-600">{description}</p>
       </div>
     </motion.div>
   );
