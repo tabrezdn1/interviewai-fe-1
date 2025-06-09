@@ -1,7 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { Session, User, Provider } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import { getRedirectUrl } from '../lib/utils';
 
 export interface UserProfile {
   id: string;
@@ -18,7 +17,6 @@ interface AuthContextType {
     credentials?: { email: string; password: string },
     options?: { redirectTo?: string }
   ) => Promise<void>;
-  signUp: (credentials: { email: string; password: string; name: string }) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -28,7 +26,6 @@ export const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   login: async () => {},
-  signUp: async () => {},
   logout: async () => {},
   isAuthenticated: false,
 });
@@ -136,51 +133,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signUp = async (credentials: { email: string; password: string; name: string }): Promise<void> => {
-    setLoading(true);
-    
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: credentials.email,
-        password: credentials.password,
-        options: {
-          data: {
-            full_name: credentials.name,
-          },
-          emailRedirectTo: `${window.location.origin}/dashboard`
-        }
-      });
-      
-      if (error) throw error;
-      
-      if (data.user) {
-        // Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            { 
-              id: data.user.id,
-              name: credentials.name,
-              avatar_url: null,
-              email_confirmed: false
-            }
-          ]);
-        
-        if (profileError) throw profileError;
-        
-        // Auto-login
-        if (data.session) {
-          await handleSession(data.session);
-        }
-      }
-    } catch (error: any) {
-      console.error('Error signing up:', error);
-      throw new Error(error.error_description || error.message || 'Error during sign up');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const login = async (
     provider: string,
     credentials?: { email: string; password: string },
@@ -189,25 +141,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setLoading(true);
     
     try {
-      if (provider === 'email' && credentials) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: credentials.email,
-          password: credentials.password,
-        });
-        
-        if (error) throw error;
-        
-        if (data.session) {
-          await handleSession(data.session);
-        }
-      } else if (['google', 'github'].includes(provider)) {
+      if (['google', 'github'].includes(provider)) {
         // For OAuth providers, we need to use signInWithOAuth
         const providerEnum = provider as Provider;
         
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: providerEnum,
           options: {
-            redirectTo: getRedirectUrl(),
+            redirectTo: options?.redirectTo || `${window.location.origin}/dashboard`,
             queryParams: {
               // Optional additional parameters
               prompt: 'select_account', // Force account selection (Google)
@@ -247,7 +188,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     loading,
     login,
-    signUp,
     logout,
     isAuthenticated: !!user,
   };
