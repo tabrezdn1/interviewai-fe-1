@@ -82,9 +82,12 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
         
         const replicaList = await tavusAPI.getReplicas();
         console.log('Fetched replicas:', replicaList);
-        setReplicas(replicaList);
         
-        if (replicaList.length === 0) {
+        // Ensure replicaList is always an array to prevent "find is not a function" errors
+        const safeReplicaList = Array.isArray(replicaList) ? replicaList : [];
+        setReplicas(safeReplicaList);
+        
+        if (safeReplicaList.length === 0) {
           console.warn('No replicas found, switching to mock mode');
           setIsMockMode(true);
           setError('No AI interviewers available. Using demo mode.');
@@ -151,7 +154,9 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
 
     console.log('Selected round:', targetRound);
 
-    // Check if replica is available
+    // Check if replica is available - ensure replicas is always an array
+    const safeReplicas = Array.isArray(replicas) ? replicas : [];
+    
     if (isMockMode) {
       return { 
         replicaId: `mock-${targetRound.id}-replica`, 
@@ -159,7 +164,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       };
     }
 
-    const availableReplica = replicas.find(r => 
+    const availableReplica = safeReplicas.find(r => 
       r.replica_id === targetRound.replicaId && r.status === 'ready'
     );
 
