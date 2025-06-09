@@ -44,7 +44,7 @@ const Login: React.FC = () => {
       setError(null);
       setIsSubmitting(true);
       setIsRedirecting(true);
-      await login(provider);
+      await login(provider, undefined, { redirectTo: `${window.location.origin}/dashboard` });
       // Note: The page will redirect, so we don't need to navigate here
     } catch (error) {
       console.error('Login failed:', error);

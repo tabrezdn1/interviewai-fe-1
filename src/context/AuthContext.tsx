@@ -12,7 +12,11 @@ export interface UserProfile {
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
-  login: (provider: string, credentials?: { email: string; password: string }) => Promise<void>;
+  login: (
+    provider: string,
+    credentials?: { email: string; password: string },
+    options?: { redirectTo?: string }
+  ) => Promise<void>;
   signUp: (credentials: { email: string; password: string; name: string }) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
@@ -178,7 +182,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (
     provider: string,
-    credentials?: { email: string; password: string }
+    credentials?: { email: string; password: string },
+    options?: { redirectTo?: string }
   ): Promise<void> => {
     setLoading(true);
     
@@ -201,7 +206,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: providerEnum,
           options: {
-            redirectTo: `${window.location.origin}/dashboard`,
+            redirectTo: options?.redirectTo || `${window.location.origin}/dashboard`,
             queryParams: {
               // Optional additional parameters
               prompt: 'select_account', // Force account selection (Google)
