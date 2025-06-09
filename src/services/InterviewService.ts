@@ -11,6 +11,8 @@ export interface InterviewFormData {
   experience: string;
   difficulty: string;
   duration: number;
+  interviewMode?: string;
+  selectedRounds?: string[];
 }
 
 export async function createInterview(userId: string, formData: InterviewFormData) {

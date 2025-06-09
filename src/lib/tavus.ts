@@ -18,11 +18,21 @@ interface TavusConversationRequest {
   };
 }
 
+interface InterviewRound {
+  id: string;
+  name: string;
+  description: string;
+  replicaId: string;
+  duration: number; // in minutes
+  icon: string;
+}
+
 interface TavusConversationResponse {
   conversation_id: string;
   conversation_url: string;
   status: string;
   created_at: string;
+  round?: string;
 }
 
 interface TavusReplicaResponse {
@@ -35,6 +45,68 @@ interface TavusReplicaResponse {
   video_url?: string;
   thumbnail_url?: string;
 }
+
+// Interview round configurations
+export const getInterviewRounds = (): InterviewRound[] => {
+  const hrReplicaId = import.meta.env.VITE_TAVUS_HR_REPLICA_ID;
+  const technicalReplicaId = import.meta.env.VITE_TAVUS_TECHNICAL_REPLICA_ID;
+  const behavioralReplicaId = import.meta.env.VITE_TAVUS_BEHAVIORAL_REPLICA_ID;
+
+  const rounds: InterviewRound[] = [];
+
+  if (hrReplicaId && hrReplicaId !== 'your_hr_replica_id_here') {
+    rounds.push({
+      id: 'screening',
+      name: 'HR Screening',
+      description: 'Initial screening with HR representative',
+      replicaId: hrReplicaId,
+      duration: 15,
+      icon: 'User'
+    });
+  }
+
+  if (technicalReplicaId && technicalReplicaId !== 'your_technical_replica_id_here') {
+    rounds.push({
+      id: 'technical',
+      name: 'Technical Round',
+      description: 'Technical interview with engineering lead',
+      replicaId: technicalReplicaId,
+      duration: 45,
+      icon: 'Code'
+    });
+  }
+
+  if (behavioralReplicaId && behavioralReplicaId !== 'your_behavioral_replica_id_here') {
+    rounds.push({
+      id: 'behavioral',
+      name: 'Behavioral Round',
+      description: 'Behavioral interview with hiring manager',
+      replicaId: behavioralReplicaId,
+      duration: 30,
+      icon: 'MessageSquare'
+    });
+  }
+
+  return rounds;
+};
+
+// Get replica ID for specific interview type
+export const getReplicaForInterviewType = (interviewType: string): string | null => {
+  const rounds = getInterviewRounds();
+  
+  // Map interview types to rounds
+  const typeToRoundMap: Record<string, string> = {
+    'screening': 'screening',
+    'technical': 'technical',
+    'behavioral': 'behavioral',
+    'mixed': 'technical' // Default to technical for mixed interviews
+  };
+
+  const roundId = typeToRoundMap[interviewType];
+  const round = rounds.find(r => r.id === roundId);
+  
+  return round?.replicaId || null;
+};
 
 class TavusAPI {
   private config: TavusConfig;
@@ -75,11 +147,19 @@ class TavusAPI {
   }
 
   // Create a new conversation
-  async createConversation(request: TavusConversationRequest): Promise<TavusConversationResponse> {
-    return this.makeRequest<TavusConversationResponse>('/v2/conversations', {
+  async createConversation(
+    request: TavusConversationRequest, 
+    round?: string
+  ): Promise<TavusConversationResponse> {
+    const response = await this.makeRequest<TavusConversationResponse>('/v2/conversations', {
       method: 'POST',
       body: JSON.stringify(request),
     });
+    
+    return {
+      ...response,
+      round
+    };
   }
 
   // Get conversation details
@@ -124,4 +204,10 @@ export const isTavusConfigured = (): boolean => {
   const apiKey = import.meta.env.VITE_TAVUS_API_KEY;
   return !!(apiKey && apiKey !== 'your_tavus_api_key_here');
 };
-export type { TavusConversationRequest, TavusConversationResponse, TavusReplicaResponse };
+
+export type { 
+  TavusConversationRequest, 
+  TavusConversationResponse, 
+  TavusReplicaResponse,
+  InterviewRound 
+};

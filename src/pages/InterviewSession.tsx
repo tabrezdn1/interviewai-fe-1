@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Mic, MicOff, Video, VideoOff, MessageSquare, 
-  Clock, X, AlertCircle, PauseCircle, PlayCircle, Settings
+  Clock, X, AlertCircle, PauseCircle, PlayCircle, Settings, ChevronRight, Users
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { getInterview, completeInterview } from '../services/InterviewService';
@@ -51,12 +51,16 @@ const InterviewSession: React.FC = () => {
   // Tavus integration
   const {
     conversation,
+    currentRound,
+    availableRounds,
     isLoading: tavusLoading,
     error: tavusError,
     startConversation,
     endConversation,
+    switchToNextRound,
     isConversationActive,
-    isMockMode
+    isMockMode,
+    completedRounds
   } = useTavusInterview({
     interviewType: interviewData?.interview_types?.type,
     role: interviewData?.role,
@@ -293,16 +297,46 @@ const InterviewSession: React.FC = () => {
             {/* Interview info overlay */}
             <div className="absolute bottom-4 left-4 flex items-center gap-3 bg-gray-900 bg-opacity-75 p-3 rounded-lg">
               <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center">
-                <MessageSquare className="h-5 w-5 text-white" />
+                {currentRound?.id === 'screening' && <Users className="h-5 w-5 text-white" />}
+                {currentRound?.id === 'technical' && <Code className="h-5 w-5 text-white" />}
+                {currentRound?.id === 'behavioral' && <MessageSquare className="h-5 w-5 text-white" />}
+                {!currentRound && <MessageSquare className="h-5 w-5 text-white" />}
               </div>
               <div>
-                <p className="font-medium">AI Interviewer</p>
+                <p className="font-medium">
+                  {currentRound?.name || 'AI Interviewer'}
+                </p>
                 <p className="text-sm text-gray-400">
-                  {interviewData.interview_types?.title || 'General'} Interview
+                  {currentRound?.description || `${interviewData.interview_types?.title || 'General'} Interview`}
                   {isMockMode && ' (Demo)'}
                 </p>
               </div>
             </div>
+            
+            {/* Round progress indicator for complete interviews */}
+            {availableRounds.length > 1 && (
+              <div className="absolute top-4 left-4 bg-gray-900 bg-opacity-75 p-3 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4 text-white" />
+                  <span className="text-sm text-white font-medium">Interview Progress</span>
+                </div>
+                <div className="flex gap-2">
+                  {availableRounds.map((round, index) => (
+                    <div
+                      key={round.id}
+                      className={`w-3 h-3 rounded-full ${
+                        completedRounds.includes(round.id)
+                          ? 'bg-green-500'
+                          : currentRound?.id === round.id
+                            ? 'bg-primary-500'
+                            : 'bg-gray-600'
+                      }`}
+                      title={round.name}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
             
             {/* Self video placeholder */}
             <div className="absolute top-4 right-4 w-32 h-24 bg-gray-700 rounded-lg overflow-hidden shadow-lg border border-gray-600">
@@ -433,13 +467,28 @@ const InterviewSession: React.FC = () => {
             </button>
           </div>
           
-          <Button
-            onClick={handleNextQuestion}
-            className="btn-primary"
-            disabled={!isConversationActive && !isMockMode}
-          >
-            {currentQuestion < interviewData.questions.length - 1 ? 'Next Question' : 'Finish Interview'}
-          </Button>
+          <div className="flex items-center gap-3">
+            {/* Show next round button if in complete interview mode */}
+            {availableRounds.length > 1 && currentRound && (
+              <div className="text-sm text-gray-400">
+                Round {availableRounds.findIndex(r => r.id === currentRound.id) + 1} of {availableRounds.length}
+              </div>
+            )}
+            
+            <Button
+              onClick={handleNextQuestion}
+              className="btn-primary"
+              disabled={!isConversationActive && !isMockMode}
+            >
+              {currentQuestion < interviewData.questions.length - 1 
+                ? 'Next Question' 
+                : availableRounds.length > 1 && currentRound && availableRounds.findIndex(r => r.id === currentRound.id) < availableRounds.length - 1
+                  ? 'Next Round'
+                  : 'Finish Interview'
+              }
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         </div>
       </div>
       

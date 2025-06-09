@@ -1,47 +1,70 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getTavusAPI, TavusConversationResponse, TavusReplicaResponse, isTavusConfigured } from '../lib/tavus';
+import { 
+  getTavusAPI, 
+  TavusConversationResponse, 
+  TavusReplicaResponse, 
+  InterviewRound,
+  isTavusConfigured,
+  getInterviewRounds,
+  getReplicaForInterviewType
+} from '../lib/tavus';
 
 interface UseTavusInterviewOptions {
   interviewType?: string;
   role?: string;
   difficulty?: string;
+  interviewRound?: string; // 'screening', 'technical', 'behavioral', or 'complete'
   autoStart?: boolean;
 }
 
 interface UseTavusInterviewReturn {
   conversation: TavusConversationResponse | null;
+  currentRound: InterviewRound | null;
+  availableRounds: InterviewRound[];
   replicas: TavusReplicaResponse[];
   isLoading: boolean;
   error: string | null;
-  startConversation: () => Promise<void>;
+  startConversation: (roundId?: string) => Promise<void>;
   endConversation: () => Promise<void>;
+  switchToNextRound: () => Promise<void>;
   isConversationActive: boolean;
   isMockMode: boolean;
+  completedRounds: string[];
 }
 
 export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTavusInterviewReturn => {
   const [conversation, setConversation] = useState<TavusConversationResponse | null>(null);
+  const [currentRound, setCurrentRound] = useState<InterviewRound | null>(null);
+  const [availableRounds, setAvailableRounds] = useState<InterviewRound[]>([]);
   const [replicas, setReplicas] = useState<TavusReplicaResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isConversationActive, setIsConversationActive] = useState(false);
   const [isMockMode, setIsMockMode] = useState(false);
+  const [completedRounds, setCompletedRounds] = useState<string[]>([]);
 
-  // Load available replicas on mount
+  // Load available rounds and replicas on mount
   useEffect(() => {
-    const loadReplicas = async () => {
+    const loadInterviewData = async () => {
+      // Load available interview rounds
+      const rounds = getInterviewRounds();
+      setAvailableRounds(rounds);
+
       if (!isTavusConfigured()) {
         console.warn('Tavus API key not configured. Using mock AI interviewer.');
         setIsMockMode(true);
-        // Create a mock replica for development
-        setReplicas([{
-          replica_id: 'mock-replica-123',
-          replica_name: 'AI Interviewer (Demo Mode)',
+        
+        // Create mock replicas for each round
+        const mockReplicas = rounds.map(round => ({
+          replica_id: `mock-${round.id}-replica`,
+          replica_name: `${round.name} (Demo Mode)`,
           status: 'ready',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           visibility: 'private'
-        }]);
+        }));
+        
+        setReplicas(mockReplicas);
         return;
       }
 
@@ -59,7 +82,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
         setError(err instanceof Error ? err.message : 'Failed to load AI interviewers');
         
         setIsMockMode(true);
-        // Fallback to mock replica if API fails
+        // Fallback to mock replicas if API fails
         setReplicas([{
           replica_id: 'mock-replica-123',
           replica_name: 'AI Interviewer (Demo)',
@@ -73,53 +96,87 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       }
     };
 
-    loadReplicas();
+    loadInterviewData();
   }, []);
 
-  // Select appropriate replica based on interview options
-  const selectReplica = useCallback((): string | null => {
-    // Defensive check to ensure replicas is an array
-    if (!Array.isArray(replicas) || replicas.length === 0) {
-      console.warn('Replicas is not a valid array or is empty:', replicas);
+  // Select appropriate replica for a specific round
+  const selectReplicaForRound = useCallback((roundId?: string): { replicaId: string | null; round: InterviewRound | null } => {
+    if (!Array.isArray(availableRounds) || availableRounds.length === 0) {
+      console.warn('No available rounds configured');
       return null;
     }
 
-    // Check for default replica ID from environment
-    const defaultReplicaId = import.meta.env.VITE_TAVUS_DEFAULT_REPLICA_ID;
-    if (defaultReplicaId) {
-      const defaultReplica = replicas.find(r => r.replica_id === defaultReplicaId && r.status === 'ready');
-      if (defaultReplica) {
-        return defaultReplica.replica_id;
-      }
+    let targetRound: InterviewRound | null = null;
+
+    if (roundId) {
+      // Use specific round if provided
+      targetRound = availableRounds.find(r => r.id === roundId) || null;
+    } else if (options.interviewType) {
+      // Map interview type to round
+      const typeToRoundMap: Record<string, string> = {
+        'screening': 'screening',
+        'technical': 'technical', 
+        'behavioral': 'behavioral',
+        'mixed': 'technical' // Default to technical for mixed
+      };
+      
+      const mappedRoundId = typeToRoundMap[options.interviewType];
+      targetRound = availableRounds.find(r => r.id === mappedRoundId) || null;
     }
 
-    // For now, select the first available replica
-    // In the future, you could implement logic to select based on:
-    // - Interview type (technical vs behavioral)
-    // - Role (engineering vs product management)
-    // - Difficulty level
-    const availableReplicas = replicas.filter(r => r.status === 'ready');
-    return availableReplicas.length > 0 ? availableReplicas[0].replica_id : null;
-  }, [replicas]);
+    // If no specific round found, use first available
+    if (!targetRound && availableRounds.length > 0) {
+      targetRound = availableRounds[0];
+    }
 
-  const startConversation = useCallback(async () => {
+    if (!targetRound) {
+      return { replicaId: null, round: null };
+    }
+
+    // Check if replica is available
+    if (isMockMode) {
+      return { 
+        replicaId: `mock-${targetRound.id}-replica`, 
+        round: targetRound 
+      };
+    }
+
+    const availableReplica = replicas.find(r => 
+      r.replica_id === targetRound.replicaId && r.status === 'ready'
+    );
+
+    if (availableReplica) {
+      return { 
+        replicaId: availableReplica.replica_id, 
+        round: targetRound 
+      };
+    }
+
+    return { replicaId: null, round: null };
+  }, [availableRounds, replicas, isMockMode, options.interviewType]);
+
+  const startConversation = useCallback(async (roundId?: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const replicaId = selectReplica();
-      if (!replicaId) {
-        throw new Error('No AI interviewer available. Please try again later.');
+      const { replicaId, round } = selectReplicaForRound(roundId);
+      
+      if (!replicaId || !round) {
+        throw new Error(`No AI interviewer available for ${roundId || 'this interview type'}. Please try again later.`);
       }
 
+      setCurrentRound(round);
+
       // Check if this is a mock replica
-      if (replicaId === 'mock-replica-123') {
+      if (replicaId.startsWith('mock-')) {
         // Create a mock conversation for development
         const mockConversation: TavusConversationResponse = {
-          conversation_id: 'mock-conversation-123',
-          conversation_url: 'https://tavus.io/conversations/mock-conversation-123',
+          conversation_id: `mock-conversation-${round.id}-${Date.now()}`,
+          conversation_url: `https://tavus.io/conversations/mock-conversation-${round.id}`,
           status: 'active',
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          round: round.id
         };
         
         setConversation(mockConversation);
@@ -129,13 +186,13 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
 
       const tavusAPI = getTavusAPI();
       
-      // Create conversation with interview-specific settings
+      // Create conversation with round-specific settings
       const conversationRequest = {
         replica_id: replicaId,
-        conversation_name: `Interview - ${options.role || 'General'} - ${new Date().toISOString()}`,
-        callback_url: `${window.location.origin}/api/tavus/callback`, // Optional webhook
+        conversation_name: `${round.name} - ${options.role || 'General'} - ${new Date().toISOString()}`,
+        callback_url: `${window.location.origin}/api/tavus/callback`,
         properties: {
-          max_call_duration: 3600, // 1 hour max
+          max_call_duration: round.duration * 60, // Convert minutes to seconds
           participant_left_timeout: 30,
           participant_absent_timeout: 60,
           enable_recording: true,
@@ -144,7 +201,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
         },
       };
 
-      const newConversation = await tavusAPI.createConversation(conversationRequest);
+      const newConversation = await tavusAPI.createConversation(conversationRequest, round.id);
       setConversation(newConversation);
       setIsConversationActive(true);
     } catch (err) {
@@ -153,16 +210,22 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
     } finally {
       setIsLoading(false);
     }
-  }, [selectReplica, options.role]);
+  }, [selectReplicaForRound, options.role]);
 
   const endConversation = useCallback(async () => {
     if (!conversation) return;
 
     setIsLoading(true);
     try {
+      // Mark current round as completed
+      if (currentRound) {
+        setCompletedRounds(prev => [...prev, currentRound.id]);
+      }
+
       // Check if this is a mock conversation
-      if (conversation.conversation_id === 'mock-conversation-123') {
+      if (conversation.conversation_id.startsWith('mock-conversation-')) {
         setConversation(null);
+        setCurrentRound(null);
         setIsConversationActive(false);
         return;
       }
@@ -170,6 +233,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       const tavusAPI = getTavusAPI();
       await tavusAPI.endConversation(conversation.conversation_id);
       setConversation(null);
+      setCurrentRound(null);
       setIsConversationActive(false);
     } catch (err) {
       console.error('Failed to end Tavus conversation:', err);
@@ -177,23 +241,45 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
     } finally {
       setIsLoading(false);
     }
-  }, [conversation]);
+  }, [conversation, currentRound]);
+
+  const switchToNextRound = useCallback(async () => {
+    if (!currentRound) return;
+
+    // End current conversation
+    await endConversation();
+
+    // Find next round
+    const currentIndex = availableRounds.findIndex(r => r.id === currentRound.id);
+    const nextRound = availableRounds[currentIndex + 1];
+
+    if (nextRound) {
+      // Start next round after a brief delay
+      setTimeout(() => {
+        startConversation(nextRound.id);
+      }, 2000);
+    }
+  }, [currentRound, availableRounds, endConversation, startConversation]);
 
   // Auto-start conversation if requested
   useEffect(() => {
-    if (options.autoStart && replicas.length > 0 && !conversation && !isLoading) {
+    if (options.autoStart && availableRounds.length > 0 && !conversation && !isLoading) {
       startConversation();
     }
-  }, [options.autoStart, replicas.length, conversation, isLoading, startConversation]);
+  }, [options.autoStart, availableRounds.length, conversation, isLoading, startConversation]);
 
   return {
     conversation,
+    currentRound,
+    availableRounds,
     replicas,
     isLoading,
     error,
     startConversation,
     endConversation,
+    switchToNextRound,
     isConversationActive,
     isMockMode,
+    completedRounds,
   };
 };
