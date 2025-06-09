@@ -162,28 +162,34 @@ export const useMediaAccess = (): UseMediaAccessReturn => {
   const toggleVideo = useCallback(() => {
     if (state.videoStream) {
       const videoTracks = state.videoStream.getVideoTracks();
+      const newEnabled = !videoTracks.some(track => track.enabled);
       videoTracks.forEach(track => {
-        track.enabled = !track.enabled;
+        track.enabled = newEnabled;
       });
       
       setState(prev => ({
         ...prev,
-        hasVideoPermission: videoTracks.some(track => track.enabled)
+        hasVideoPermission: newEnabled
       }));
+      
+      console.log('Video toggled:', newEnabled ? 'ON' : 'OFF');
     }
   }, [state.videoStream]);
 
   const toggleAudio = useCallback(() => {
     if (state.audioStream) {
       const audioTracks = state.audioStream.getAudioTracks();
+      const newEnabled = !audioTracks.some(track => track.enabled);
       audioTracks.forEach(track => {
-        track.enabled = !track.enabled;
+        track.enabled = newEnabled;
       });
       
       setState(prev => ({
         ...prev,
-        hasAudioPermission: audioTracks.some(track => track.enabled)
+        hasAudioPermission: newEnabled
       }));
+      
+      console.log('Audio toggled:', newEnabled ? 'ON' : 'OFF');
     }
   }, [state.audioStream]);
 

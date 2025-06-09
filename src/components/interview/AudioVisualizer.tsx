@@ -12,6 +12,13 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
   className = ''
 }) => {
   const [audioLevels, setAudioLevels] = useState<number[]>(new Array(20).fill(0));
+  
+  useEffect(() => {
+    console.log('AudioVisualizer props:', {
+      hasAudioStream: !!audioStream,
+      isRecording
+    });
+  }, [audioStream, isRecording]);
 
   useEffect(() => {
     if (!audioStream || !isRecording) {
@@ -20,6 +27,7 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       return;
     }
 
+    console.log('Setting up audio visualization...');
     let animationFrame: number;
     let audioContext: AudioContext | null = null;
     let analyser: AnalyserNode | null = null;
@@ -36,6 +44,8 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       
       const bufferLength = analyser.frequencyBinCount;
       dataArray = new Uint8Array(bufferLength);
+      
+      console.log('Audio context created successfully');
 
       const updateLevels = () => {
         if (analyser && dataArray) {
@@ -84,7 +94,9 @@ const AudioVisualizer: React.FC<AudioVisualizerProps> = ({
       {audioLevels.map((level, index) => (
         <div
           key={index}
-          className="bg-primary-500 w-1 rounded-full transition-all duration-100 ease-out"
+          className={`w-1 rounded-full transition-all duration-100 ease-out ${
+            isRecording ? 'bg-primary-500' : 'bg-gray-500'
+          }`}
           style={{
             height: `${Math.max(4, level)}%`,
             opacity: isRecording ? 1 : 0.3

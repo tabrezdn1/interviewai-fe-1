@@ -89,6 +89,17 @@ const InterviewSession: React.FC = () => {
     cleanup: cleanupMedia
   } = useMediaAccess();
   
+  // Debug media state
+  useEffect(() => {
+    console.log('Media state updated:', {
+      hasVideoPermission,
+      hasAudioPermission,
+      hasVideoStream: !!videoStream,
+      hasAudioStream: !!audioStream,
+      isRecording
+    });
+  }, [hasVideoPermission, hasAudioPermission, videoStream, audioStream, isRecording]);
+  
   // Format time as MM:SS
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -154,12 +165,14 @@ const InterviewSession: React.FC = () => {
   // Handle permissions request
   const handleRequestPermissions = async () => {
     try {
+      console.log('Requesting permissions...');
       await requestPermissions();
       setHasRequestedPermissions(true);
       setShowPermissionsDialog(false);
       
       // Start conversation after permissions are granted
       if (interviewData) {
+        console.log('Starting conversation after permissions granted');
         startConversation();
       }
     } catch (error) {
@@ -168,11 +181,13 @@ const InterviewSession: React.FC = () => {
   };
   
   const handleSkipPermissions = () => {
+    console.log('Skipping permissions');
     setHasRequestedPermissions(true);
     setShowPermissionsDialog(false);
     
     // Start conversation without media permissions
     if (interviewData) {
+      console.log('Starting conversation without permissions');
       startConversation();
     }
   };
@@ -507,7 +522,10 @@ const InterviewSession: React.FC = () => {
         <div className="container-custom mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button
-              onClick={toggleAudio}
+              onClick={() => {
+                console.log('Bottom audio button clicked');
+                toggleAudio();
+              }}
               className={`p-3 rounded-full ${
                 hasAudioPermission ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-700 hover:bg-gray-600'
               } transition-colors`}
@@ -517,7 +535,10 @@ const InterviewSession: React.FC = () => {
             </button>
             
             <button
-              onClick={toggleVideo}
+              onClick={() => {
+                console.log('Bottom video button clicked');
+                toggleVideo();
+              }}
               className={`p-3 rounded-full ${
                 hasVideoPermission ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-700 hover:bg-gray-600'
               } transition-colors`}
