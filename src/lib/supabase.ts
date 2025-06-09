@@ -43,6 +43,7 @@ try {
         storageKey: 'interview-ai-auth',
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        flowType: 'pkce',
         // Use localStorage and cookies for best compatibility
         storage: {
           getItem: (key) => {
