@@ -191,7 +191,7 @@ let tavusInstance: TavusAPI | null = null;
 export const getTavusAPI = (): TavusAPI => {
   if (!tavusInstance) {
     const apiKey = import.meta.env.VITE_TAVUS_API_KEY;
-    if (!apiKey) {
+    if (!apiKey || apiKey === 'your_tavus_api_key_here') {
       throw new Error('VITE_TAVUS_API_KEY environment variable is required');
     }
     tavusInstance = new TavusAPI(apiKey);

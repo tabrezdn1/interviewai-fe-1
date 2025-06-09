@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Loader2, AlertCircle, Volume2, VolumeX, Video } from 'lucide-react';
+import { Loader2, AlertCircle, Volume2, VolumeX, Video, Play } from 'lucide-react';
 import { Button } from '../ui/button';
 
 interface TavusVideoPlayerProps {
@@ -22,39 +22,75 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
     if (conversationUrl && iframeRef.current) {
       const iframe = iframeRef.current;
       
       const handleLoad = () => {
+        console.log('Tavus iframe loaded successfully');
         setIsVideoLoaded(true);
         onVideoReady?.();
       };
 
       const handleError = () => {
         const errorMsg = 'Failed to load Tavus video conversation';
+        console.error(errorMsg);
         onVideoError?.(errorMsg);
       };
 
       iframe.addEventListener('load', handleLoad);
       iframe.addEventListener('error', handleError);
 
+      // Set a timeout to detect if iframe fails to load
+      const loadTimeout = setTimeout(() => {
+        if (!isVideoLoaded) {
+          console.warn('Tavus iframe taking longer than expected to load');
+        }
+      }, 10000);
+
       return () => {
         iframe.removeEventListener('load', handleLoad);
         iframe.removeEventListener('error', handleError);
+        clearTimeout(loadTimeout);
       };
     }
-  }, [conversationUrl, onVideoReady, onVideoError]);
+  }, [conversationUrl, onVideoReady, onVideoError, isVideoLoaded]);
 
   const toggleMute = () => {
-    if (iframeRef.current) {
-      // Send message to iframe to toggle mute
-      iframeRef.current.contentWindow?.postMessage(
-        { type: 'toggleMute', muted: !isMuted },
-        '*'
-      );
+    if (iframeRef.current && conversationUrl && !conversationUrl.includes('mock-conversation-url')) {
+      // Send message to Tavus iframe to toggle mute
+      try {
+        iframeRef.current.contentWindow?.postMessage(
+          { type: 'toggleMute', muted: !isMuted },
+          '*'
+        );
+        setIsMuted(!isMuted);
+      } catch (error) {
+        console.warn('Could not communicate with Tavus iframe:', error);
+      }
+    } else {
+      // Mock mode toggle
       setIsMuted(!isMuted);
+    }
+  };
+
+  const startConversation = () => {
+    if (iframeRef.current && conversationUrl && !conversationUrl.includes('mock-conversation-url')) {
+      // Send message to Tavus iframe to start conversation
+      try {
+        iframeRef.current.contentWindow?.postMessage(
+          { type: 'startConversation' },
+          '*'
+        );
+        setHasStarted(true);
+      } catch (error) {
+        console.warn('Could not communicate with Tavus iframe:', error);
+      }
+    } else {
+      // Mock mode start
+      setHasStarted(true);
     }
   };
 
@@ -64,7 +100,14 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
         <div className="text-center text-white p-8">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">Video Error</h3>
-          <p className="text-gray-300 text-sm">{error}</p>
+          <p className="text-gray-300 text-sm mb-4">{error}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline"
+            className="text-white border-white hover:bg-white hover:text-gray-900"
+          >
+            Retry
+          </Button>
         </div>
       </div>
     );
@@ -87,7 +130,8 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
   }
 
   // Check if this is a mock conversation URL
-  const isMockConversation = conversationUrl.includes('mock-conversation-url');
+  const isMockConversation = conversationUrl.includes('mock-conversation-url') || 
+                            conversationUrl.includes('mock-conversation-');
 
   if (isMockConversation) {
     return (
@@ -100,11 +144,23 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
             </div>
             <h3 className="text-xl font-semibold mb-2">AI Interviewer</h3>
             <p className="text-blue-200 text-sm mb-4">Ready to conduct your interview</p>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 rounded-full text-green-300 text-xs">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              Live
-            </div>
-            <div className="mt-4 text-xs text-blue-300">
+            
+            {!hasStarted ? (
+              <Button 
+                onClick={startConversation}
+                className="mb-4 bg-green-600 hover:bg-green-700"
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Start Interview
+              </Button>
+            ) : (
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 rounded-full text-green-300 text-xs mb-4">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                Live
+              </div>
+            )}
+            
+            <div className="text-xs text-blue-300">
               Demo Mode - Add your Tavus API key to enable real AI video
             </div>
           </div>
@@ -140,9 +196,10 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
         ref={iframeRef}
         src={conversationUrl}
         className="w-full h-full min-h-[400px] border-0"
-        allow="camera; microphone; autoplay; encrypted-media; fullscreen"
+        allow="camera; microphone; autoplay; encrypted-media; fullscreen; display-capture"
         allowFullScreen
         title="Tavus AI Interviewer"
+        sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
       />
       
       {/* Video Controls Overlay */}
@@ -167,9 +224,15 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
           <div className="text-center text-white">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3" />
             <p className="text-sm">Connecting to AI interviewer...</p>
+            <p className="text-xs text-gray-400 mt-2">This may take a few moments</p>
           </div>
         </div>
       )}
+
+      {/* Connection status indicator */}
+      <div className="absolute bottom-4 left-4 px-3 py-1 bg-green-500/20 rounded-full text-green-300 text-xs">
+        {isVideoLoaded ? 'Connected' : 'Connecting...'}
+      </div>
     </div>
   );
 };

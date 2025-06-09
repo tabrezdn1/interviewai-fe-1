@@ -259,6 +259,14 @@ export async function getFeedback(interviewId: string) {
 
 export async function cancelInterview(id: string) {
   try {
+    // Validate UUID format before making database calls
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(id)) {
+      console.warn(`Invalid UUID format for cancellation: ${id}, skipping database update`);
+      return true; // Return success for mock interviews
+    }
+
     const { error } = await supabase
       .from('interviews')
       .update({ status: 'canceled' })
@@ -268,6 +276,30 @@ export async function cancelInterview(id: string) {
     return true;
   } catch (error) {
     console.error('Error canceling interview:', error);
+    return false;
+  }
+}
+
+export async function deleteInterview(id: string) {
+  try {
+    // Validate UUID format before making database calls
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(id)) {
+      console.warn(`Invalid UUID format for deletion: ${id}, skipping database update`);
+      return true; // Return success for mock interviews
+    }
+
+    // Delete the interview (this will cascade delete related records due to foreign key constraints)
+    const { error } = await supabase
+      .from('interviews')
+      .delete()
+      .eq('id', id);
+    
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error deleting interview:', error);
     return false;
   }
 }

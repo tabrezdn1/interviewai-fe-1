@@ -46,9 +46,12 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
   // Load available rounds and replicas on mount
   useEffect(() => {
     const loadInterviewData = async () => {
+      console.log('Loading Tavus interview data...');
+      
       // Load available interview rounds
       const rounds = getInterviewRounds();
       setAvailableRounds(rounds);
+      console.log('Available rounds:', rounds);
 
       if (!isTavusConfigured()) {
         console.warn('Tavus API key not configured. Using mock AI interviewer.');
@@ -71,26 +74,35 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       try {
         setIsLoading(true);
         const tavusAPI = getTavusAPI();
+        console.log('Fetching Tavus replicas...');
+        
         const replicaList = await tavusAPI.getReplicas();
+        console.log('Fetched replicas:', replicaList);
         setReplicas(replicaList);
         
         if (replicaList.length === 0) {
-          setError('No AI interviewers available. Please contact support.');
+          console.warn('No replicas found, switching to mock mode');
+          setIsMockMode(true);
+          setError('No AI interviewers available. Using demo mode.');
         }
       } catch (err) {
         console.error('Failed to load Tavus replicas:', err);
         setError(err instanceof Error ? err.message : 'Failed to load AI interviewers');
         
         setIsMockMode(true);
+        console.log('Switching to mock mode due to API error');
+        
         // Fallback to mock replicas if API fails
-        setReplicas([{
-          replica_id: 'mock-replica-123',
-          replica_name: 'AI Interviewer (Demo)',
+        const mockReplicas = rounds.map(round => ({
+          replica_id: `mock-${round.id}-replica`,
+          replica_name: `${round.name} (Demo Mode)`,
           status: 'ready',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           visibility: 'private'
-        }]);
+        }));
+        
+        setReplicas(mockReplicas);
       } finally {
         setIsLoading(false);
       }
@@ -103,7 +115,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
   const selectReplicaForRound = useCallback((roundId?: string): { replicaId: string | null; round: InterviewRound | null } => {
     if (!Array.isArray(availableRounds) || availableRounds.length === 0) {
       console.warn('No available rounds configured');
-      return null;
+      return { replicaId: null, round: null };
     }
 
     let targetRound: InterviewRound | null = null;
@@ -156,6 +168,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
   }, [availableRounds, replicas, isMockMode, options.interviewType]);
 
   const startConversation = useCallback(async (roundId?: string) => {
+    console.log('Starting Tavus conversation...', { roundId, isMockMode });
     setIsLoading(true);
     setError(null);
 
@@ -166,10 +179,12 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
         throw new Error(`No AI interviewer available for ${roundId || 'this interview type'}. Please try again later.`);
       }
 
+      console.log('Selected replica and round:', { replicaId, round });
       setCurrentRound(round);
 
       // Check if this is a mock replica
       if (replicaId.startsWith('mock-')) {
+        console.log('Creating mock conversation');
         // Create a mock conversation for development
         const mockConversation: TavusConversationResponse = {
           conversation_id: `mock-conversation-${round.id}-${Date.now()}`,
@@ -181,9 +196,11 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
         
         setConversation(mockConversation);
         setIsConversationActive(true);
+        console.log('Mock conversation created:', mockConversation);
         return;
       }
 
+      console.log('Creating real Tavus conversation...');
       const tavusAPI = getTavusAPI();
       
       // Create conversation with round-specific settings
@@ -201,7 +218,10 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
         },
       };
 
+      console.log('Sending conversation request:', conversationRequest);
       const newConversation = await tavusAPI.createConversation(conversationRequest, round.id);
+      console.log('Conversation created successfully:', newConversation);
+      
       setConversation(newConversation);
       setIsConversationActive(true);
     } catch (err) {
@@ -215,7 +235,9 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
   const endConversation = useCallback(async () => {
     if (!conversation) return;
 
+    console.log('Ending Tavus conversation:', conversation.conversation_id);
     setIsLoading(true);
+    
     try {
       // Mark current round as completed
       if (currentRound) {
@@ -224,6 +246,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
 
       // Check if this is a mock conversation
       if (conversation.conversation_id.startsWith('mock-conversation-')) {
+        console.log('Ending mock conversation');
         setConversation(null);
         setCurrentRound(null);
         setIsConversationActive(false);
@@ -232,6 +255,8 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
 
       const tavusAPI = getTavusAPI();
       await tavusAPI.endConversation(conversation.conversation_id);
+      console.log('Conversation ended successfully');
+      
       setConversation(null);
       setCurrentRound(null);
       setIsConversationActive(false);
@@ -246,6 +271,8 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
   const switchToNextRound = useCallback(async () => {
     if (!currentRound) return;
 
+    console.log('Switching to next round from:', currentRound.id);
+    
     // End current conversation
     await endConversation();
 
@@ -254,16 +281,20 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
     const nextRound = availableRounds[currentIndex + 1];
 
     if (nextRound) {
+      console.log('Starting next round:', nextRound.id);
       // Start next round after a brief delay
       setTimeout(() => {
         startConversation(nextRound.id);
       }, 2000);
+    } else {
+      console.log('No more rounds available');
     }
   }, [currentRound, availableRounds, endConversation, startConversation]);
 
   // Auto-start conversation if requested
   useEffect(() => {
     if (options.autoStart && availableRounds.length > 0 && !conversation && !isLoading) {
+      console.log('Auto-starting conversation');
       startConversation();
     }
   }, [options.autoStart, availableRounds.length, conversation, isLoading, startConversation]);
