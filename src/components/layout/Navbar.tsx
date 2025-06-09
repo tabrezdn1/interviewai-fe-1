@@ -126,7 +126,7 @@ const Navbar: React.FC = () => {
               <div className="flex items-center gap-3">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 hover:bg-transparent min-w-0">
+                    <Button variant="ghost\" className=\"flex items-center gap-2 hover:bg-transparent">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={user.avatar} alt={user.name} />
                         <AvatarFallback>
@@ -134,29 +134,25 @@ const Navbar: React.FC = () => {
                         </AvatarFallback>
                       </Avatar>
                       <span className={cn(
-                        "font-medium truncate max-w-[120px]", 
+                        "font-medium", 
                         isTransparent ? "text-white" : "text-foreground"
                       )}>
                         {user.name}
                       </span>
                       <ChevronDown className={cn(
-                        "h-4 w-4 flex-shrink-0", 
+                        "h-4 w-4", 
                         isTransparent ? "text-white" : "text-foreground"
                       )} />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuItem>
-                      <Link to="/settings" className="flex items-center w-full">
-                        <Settings className="h-4 w-4 mr-2" />
-                        Settings
-                      </Link>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Settings
                     </DropdownMenuItem>
                     <DropdownMenuItem>
-                      <Link to="/pricing" className="flex items-center w-full">
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Pricing & Billing
-                      </Link>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Billing
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
@@ -238,16 +234,12 @@ const Navbar: React.FC = () => {
                   
                   <div className="space-y-2">
                     <Button variant="outline" className="w-full justify-start gap-2 text-sm">
-                      <Link to="/settings" className="flex items-center w-full">
-                        <Settings className="h-4 w-4" />
-                        Settings
-                      </Link>
+                      <Settings className="h-4 w-4" />
+                      Settings
                     </Button>
                     <Button variant="outline" className="w-full justify-start gap-2 text-sm">
-                      <Link to="/pricing" className="flex items-center w-full">
-                        <CreditCard className="h-4 w-4" />
-                        Pricing & Billing
-                      </Link>
+                      <CreditCard className="h-4 w-4" />
+                      Billing
                     </Button>
                     <Button
                       onClick={async () => {
