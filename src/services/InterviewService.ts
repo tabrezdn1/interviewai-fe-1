@@ -249,8 +249,67 @@ export async function completeInterview(id: string, responses: any) {
 
 export async function getFeedback(interviewId: string) {
   try {
-    const feedback = await fetchInterviewFeedback(interviewId);
-    return feedback || mockFeedback; // Fallback to mock data if no feedback is found
+    // Validate UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    
+    if (!uuidRegex.test(interviewId)) {
+      console.warn(`Invalid UUID format: ${interviewId}, using mock data`);
+      return mockFeedback;
+    }
+
+    // Fetch feedback data
+    const { data: feedbackData, error: feedbackError } = await supabase
+      .from('feedback')
+      .select('*')
+      .eq('interview_id', interviewId)
+      .single();
+    
+    // Fetch interview details for title, date, and duration
+    const { data: interviewData, error: interviewError } = await supabase
+      .from('interviews')
+      .select('title, created_at, duration')
+      .eq('id', interviewId)
+      .single();
+    
+    // Fetch question responses
+    const { data: questionResponses, error: questionsError } = await supabase
+      .from('interview_questions')
+      .select(`
+        *,
+        questions (text, hint)
+      `)
+      .eq('interview_id', interviewId);
+    
+    if (feedbackError || interviewError) {
+      console.warn('Error fetching feedback or interview data:', feedbackError || interviewError);
+      return mockFeedback;
+    }
+    
+    // Combine the data into the expected format
+    const combinedFeedback = {
+      title: interviewData?.title || 'Interview Feedback',
+      date: interviewData?.created_at || new Date().toISOString(),
+      duration: interviewData?.duration || 20,
+      overallScore: feedbackData?.overall_score || 0,
+      summary: feedbackData?.summary || '',
+      strengths: feedbackData?.strengths || [],
+      improvements: feedbackData?.improvements || [],
+      skillAssessment: {
+        technical: { score: feedbackData?.technical_score || 0, feedback: feedbackData?.technical_feedback || '' },
+        communication: { score: feedbackData?.communication_score || 0, feedback: feedbackData?.communication_feedback || '' },
+        problemSolving: { score: feedbackData?.problem_solving_score || 0, feedback: feedbackData?.problem_solving_feedback || '' },
+        experience: { score: feedbackData?.experience_score || 0, feedback: feedbackData?.experience_feedback || '' }
+      },
+      questionResponses: questionResponses?.map(qr => ({
+        id: qr.question_id,
+        question: qr.questions?.text || '',
+        answer: qr.answer || '',
+        score: qr.score || 0,
+        feedback: qr.feedback || ''
+      })) || []
+    };
+    
+    return combinedFeedback;
   } catch (error) {
     console.error('Error fetching feedback:', error);
     return mockFeedback; // Fallback to mock data
