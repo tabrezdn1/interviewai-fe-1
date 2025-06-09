@@ -349,7 +349,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
           participant_absent_timeout: 60,
           enable_recording: true,
           enable_transcription: true,
-          language: 'en',
+          language: 'English',
         },
       };
 
