@@ -44,7 +44,7 @@ const LandingPage: React.FC = () => {
       {/* Hero Section */}
       <section className="min-h-screen flex items-center relative overflow-hidden">
         {/* Badge in top right corner */}
-        <div className="fixed top-20 right-4 z-40 sm:top-6 sm:right-6 md:top-4 md:right-4 lg:top-8 lg:right-8">
+        <div className="fixed top-20 right-4 z-40 sm:top-6 sm:right-6 md:top-20 md:right-6 lg:top-8 lg:right-8">
           <div className="relative group">
             {/* Glow effect behind badge */}
             <div className="absolute -inset-2 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
