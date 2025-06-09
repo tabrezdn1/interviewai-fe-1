@@ -54,8 +54,11 @@ export function getScoreRating(score: number): string {
 
 // Get the current domain for OAuth redirects
 export const getRedirectUrl = () => {
-  // In development, use localhost
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  // In development or Bolt preview, use current origin
+  if (window.location.hostname === 'localhost' || 
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.includes('bolt.new') ||
+      window.location.hostname.includes('stackblitz.com')) {
     return `${window.location.origin}/dashboard`;
   }
   
