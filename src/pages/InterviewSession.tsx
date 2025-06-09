@@ -68,7 +68,6 @@ const InterviewSession: React.FC = () => {
     isLoading: videoLoading,
     error: videoError
   } = tavusVideoMeeting;
-  });
   
   // Media access for user video/audio
   const {
