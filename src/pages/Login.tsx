@@ -7,6 +7,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import EmailSignInForm from '../components/auth/EmailSignInForm';
 import EmailSignUpForm from '../components/auth/EmailSignUpForm';
+import { getRedirectUrl } from '../lib/utils';
 
 const Login: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);

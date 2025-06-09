@@ -52,6 +52,22 @@ export function getScoreRating(score: number): string {
   return "Needs Improvement";
 }
 
+// Get the current domain for OAuth redirects
+export const getRedirectUrl = () => {
+  // In development, use localhost
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return `${window.location.origin}/dashboard`;
+  }
+  
+  // In production, use the current domain
+  return `${window.location.origin}/dashboard`;
+};
+
+// Get the base URL for the current environment
+export const getBaseUrl = () => {
+  return window.location.origin;
+};
+
 // Supabase utility functions
 export async function fetchInterviewTypes() {
   try {

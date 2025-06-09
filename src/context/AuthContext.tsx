@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { Session, User, Provider } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+import { getRedirectUrl } from '../lib/utils';
 
 export interface UserProfile {
   id: string;
@@ -206,7 +207,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: providerEnum,
           options: {
-            redirectTo: `${window.location.origin}/dashboard`,
+            redirectTo: getRedirectUrl(),
             queryParams: {
               // Optional additional parameters
               prompt: 'select_account', // Force account selection (Google)
