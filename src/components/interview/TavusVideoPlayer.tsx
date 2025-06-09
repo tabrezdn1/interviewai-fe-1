@@ -25,6 +25,15 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
   const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
+    console.log('TavusVideoPlayer props:', {
+      conversationUrl,
+      isLoading,
+      error,
+      hasConversationUrl: !!conversationUrl
+    });
+  }, [conversationUrl, isLoading, error]);
+
+  useEffect(() => {
     if (conversationUrl && iframeRef.current) {
       const iframe = iframeRef.current;
       
@@ -130,8 +139,8 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
   }
 
   // Check if this is a mock conversation URL
-  const isMockConversation = conversationUrl.includes('mock-conversation-url') || 
-                            conversationUrl.includes('mock-conversation-');
+  const isMockConversation = conversationUrl.includes('mock-conversation-') || 
+                            conversationUrl.includes('mock-conversation-url');
 
   if (isMockConversation) {
     return (
@@ -190,6 +199,8 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
     );
   }
 
+  console.log('Rendering real Tavus iframe with URL:', conversationUrl);
+
   return (
     <div className={`relative bg-gray-800 rounded-xl overflow-hidden ${className}`}>
       <iframe
@@ -200,6 +211,14 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
         allowFullScreen
         title="Tavus AI Interviewer"
         sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+        onLoad={() => {
+          console.log('Iframe onLoad event fired');
+          setIsVideoLoaded(true);
+        }}
+        onError={(e) => {
+          console.error('Iframe onError event fired:', e);
+          onVideoError?.('Failed to load video conversation');
+        }}
       />
       
       {/* Video Controls Overlay */}

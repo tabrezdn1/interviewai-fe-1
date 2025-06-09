@@ -124,6 +124,12 @@ class TavusAPI {
   ): Promise<T> {
     const url = `${this.config.baseUrl}${endpoint}`;
     
+    console.log('Making Tavus API request:', {
+      url,
+      method: options.method || 'GET',
+      hasApiKey: !!this.config.apiKey
+    });
+    
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -133,17 +139,39 @@ class TavusAPI {
       },
     });
 
+    console.log('Tavus API response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    });
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorText = await response.text();
+      console.error('Tavus API Error Response:', errorText);
+      
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { message: errorText };
+      }
+      
       throw new Error(`Tavus API Error: ${response.status} - ${errorData.message || response.statusText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log('Tavus API success response:', data);
+    return data;
   }
 
   // Get available replicas
   async getReplicas(): Promise<TavusReplicaResponse[]> {
-    return this.makeRequest<TavusReplicaResponse[]>('/v2/replicas');
+    try {
+      return await this.makeRequest<TavusReplicaResponse[]>('/v2/replicas');
+    } catch (error) {
+      console.error('Error fetching replicas:', error);
+      throw error;
+    }
   }
 
   // Create a new conversation
@@ -151,37 +179,64 @@ class TavusAPI {
     request: TavusConversationRequest, 
     round?: string
   ): Promise<TavusConversationResponse> {
-    const response = await this.makeRequest<TavusConversationResponse>('/v2/conversations', {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
-    
-    return {
-      ...response,
-      round
-    };
+    try {
+      console.log('Creating Tavus conversation with request:', request);
+      
+      const response = await this.makeRequest<TavusConversationResponse>('/v2/conversations', {
+        method: 'POST',
+        body: JSON.stringify(request),
+      });
+      
+      return {
+        ...response,
+        round
+      };
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      throw error;
+    }
   }
 
   // Get conversation details
   async getConversation(conversationId: string): Promise<TavusConversationResponse> {
-    return this.makeRequest<TavusConversationResponse>(`/v2/conversations/${conversationId}`);
+    try {
+      return await this.makeRequest<TavusConversationResponse>(`/v2/conversations/${conversationId}`);
+    } catch (error) {
+      console.error('Error fetching conversation:', error);
+      throw error;
+    }
   }
 
   // End a conversation
   async endConversation(conversationId: string): Promise<void> {
-    await this.makeRequest(`/v2/conversations/${conversationId}`, {
-      method: 'DELETE',
-    });
+    try {
+      await this.makeRequest(`/v2/conversations/${conversationId}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.error('Error ending conversation:', error);
+      throw error;
+    }
   }
 
   // Get conversation recording (if enabled)
   async getConversationRecording(conversationId: string): Promise<{ recording_url: string }> {
-    return this.makeRequest<{ recording_url: string }>(`/v2/conversations/${conversationId}/recording`);
+    try {
+      return await this.makeRequest<{ recording_url: string }>(`/v2/conversations/${conversationId}/recording`);
+    } catch (error) {
+      console.error('Error fetching recording:', error);
+      throw error;
+    }
   }
 
   // Get conversation transcript (if enabled)
   async getConversationTranscript(conversationId: string): Promise<{ transcript: string }> {
-    return this.makeRequest<{ transcript: string }>(`/v2/conversations/${conversationId}/transcript`);
+    try {
+      return await this.makeRequest<{ transcript: string }>(`/v2/conversations/${conversationId}/transcript`);
+    } catch (error) {
+      console.error('Error fetching transcript:', error);
+      throw error;
+    }
   }
 }
 
@@ -202,7 +257,36 @@ export const getTavusAPI = (): TavusAPI => {
 // Helper function to check if Tavus is properly configured
 export const isTavusConfigured = (): boolean => {
   const apiKey = import.meta.env.VITE_TAVUS_API_KEY;
-  return !!(apiKey && apiKey !== 'your_tavus_api_key_here');
+  const hasValidApiKey = !!(apiKey && apiKey !== 'your_tavus_api_key_here');
+  
+  console.log('Tavus configuration check:', {
+    hasApiKey: !!apiKey,
+    isValidApiKey: hasValidApiKey,
+    apiKeyLength: apiKey?.length || 0
+  });
+  
+  return hasValidApiKey;
+};
+
+// Debug function to check environment variables
+export const debugTavusConfig = () => {
+  const config = {
+    apiKey: import.meta.env.VITE_TAVUS_API_KEY,
+    hrReplicaId: import.meta.env.VITE_TAVUS_HR_REPLICA_ID,
+    technicalReplicaId: import.meta.env.VITE_TAVUS_TECHNICAL_REPLICA_ID,
+    behavioralReplicaId: import.meta.env.VITE_TAVUS_BEHAVIORAL_REPLICA_ID
+  };
+  
+  console.log('Tavus Environment Variables:', {
+    hasApiKey: !!config.apiKey,
+    apiKeyPreview: config.apiKey ? `${config.apiKey.substring(0, 8)}...` : 'Not set',
+    hasHrReplica: !!config.hrReplicaId,
+    hasTechnicalReplica: !!config.technicalReplicaId,
+    hasBehavioralReplica: !!config.behavioralReplicaId,
+    availableRounds: getInterviewRounds().length
+  });
+  
+  return config;
 };
 
 export type { 

@@ -6,7 +6,8 @@ import {
   InterviewRound,
   isTavusConfigured,
   getInterviewRounds,
-  getReplicaForInterviewType
+  getReplicaForInterviewType,
+  debugTavusConfig
 } from '../lib/tavus';
 
 interface UseTavusInterviewOptions {
@@ -47,6 +48,9 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
   useEffect(() => {
     const loadInterviewData = async () => {
       console.log('Loading Tavus interview data...');
+      
+      // Debug configuration
+      debugTavusConfig();
       
       // Load available interview rounds
       const rounds = getInterviewRounds();
@@ -145,6 +149,8 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       return { replicaId: null, round: null };
     }
 
+    console.log('Selected round:', targetRound);
+
     // Check if replica is available
     if (isMockMode) {
       return { 
@@ -158,12 +164,14 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
     );
 
     if (availableReplica) {
+      console.log('Found matching replica:', availableReplica);
       return { 
         replicaId: availableReplica.replica_id, 
         round: targetRound 
       };
     }
 
+    console.warn('No matching replica found for round:', targetRound);
     return { replicaId: null, round: null };
   }, [availableRounds, replicas, isMockMode, options.interviewType]);
 
@@ -176,7 +184,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       const { replicaId, round } = selectReplicaForRound(roundId);
       
       if (!replicaId || !round) {
-        throw new Error(`No AI interviewer available for ${roundId || 'this interview type'}. Please try again later.`);
+        throw new Error(`No AI interviewer available for ${roundId || 'this interview type'}. Please check your Tavus configuration.`);
       }
 
       console.log('Selected replica and round:', { replicaId, round });
