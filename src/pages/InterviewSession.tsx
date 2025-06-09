@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTavusVideoMeeting } from '../hooks/useTavusVideoMeeting';
 import { 
   Mic, MicOff, Video, VideoOff, MessageSquare, Shield,
   Clock, X, AlertCircle, PauseCircle, PlayCircle, Settings, ChevronRight, Users, Code
@@ -8,9 +9,9 @@ import {
 import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { getInterview, completeInterview } from '../services/InterviewService';
-import { useTavusInterview } from '../hooks/useTavusInterview';
 import { useMediaAccess } from '../hooks/useMediaAccess';
-import TavusVideoPlayer from '../components/interview/TavusVideoPlayer';
+import TavusVideoMeeting from '../components/interview/TavusVideoMeeting';
+import VideoInterviewSetup from '../components/interview/VideoInterviewSetup';
 import UserVideoFeed from '../components/interview/UserVideoFeed';
 import AudioVisualizer from '../components/interview/AudioVisualizer';
 
@@ -46,6 +47,7 @@ const InterviewSession: React.FC = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showVideoSetup, setShowVideoSetup] = useState(true);
   const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(1200); // 20 minutes in seconds
   const [responses, setResponses] = useState<Record<number, string>>({});
@@ -53,23 +55,19 @@ const InterviewSession: React.FC = () => {
   const [hasRequestedPermissions, setHasRequestedPermissions] = useState(false);
   
   // Tavus integration
-  const {
-    conversation,
-    currentRound,
-    availableRounds,
-    isLoading: tavusLoading,
-    error: tavusError,
-    startConversation,
-    endConversation,
-    switchToNextRound,
-    isConversationActive,
-    isMockMode,
-    completedRounds
-  } = useTavusInterview({
-    interviewType: interviewData?.interview_types?.type,
+  const tavusVideoMeeting = useTavusVideoMeeting({
+    interviewType: interviewData?.interview_types?.type || 'technical',
+    participantName: 'AI Interviewer',
     role: interviewData?.role,
-    difficulty: interviewData?.difficulty_levels?.value,
-    autoStart: false // We'll start manually after loading interview data
+    company: interviewData?.company || undefined
+  });
+
+  const {
+    conversationUrl,
+    connectionStatus,
+    isLoading: videoLoading,
+    error: videoError
+  } = tavusVideoMeeting;
   });
   
   // Media access for user video/audio
@@ -100,6 +98,16 @@ const InterviewSession: React.FC = () => {
     });
   }, [hasVideoPermission, hasAudioPermission, videoStream, audioStream, isRecording]);
   
+  // Handle video setup completion
+  const handleVideoSetupComplete = (url: string) => {
+    console.log('Video setup completed with URL:', url);
+    setShowVideoSetup(false);
+  };
+
+  const handleVideoError = (error: string) => {
+    console.error('Video error:', error);
+  };
+
   // Format time as MM:SS
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -131,26 +139,6 @@ const InterviewSession: React.FC = () => {
     fetchInterviewData();
   }, [id]);
 
-  // Start Tavus conversation when interview data is loaded
-  useEffect(() => {
-    if (interviewData && !conversation && !tavusLoading && !loading) {
-      // Show permissions dialog first
-      if (!hasRequestedPermissions) {
-        setShowPermissionsDialog(true);
-      } else if (hasVideoPermission || hasAudioPermission) {
-        startConversation();
-      }
-    }
-  }, [interviewData, conversation, tavusLoading, loading, startConversation, hasRequestedPermissions, hasVideoPermission, hasAudioPermission]);
-  
-  // Start recording when conversation becomes active
-  useEffect(() => {
-    if (isConversationActive && hasAudioPermission && !isRecording) {
-      console.log('Starting audio recording for interview...');
-      startRecording();
-    }
-  }, [isConversationActive, hasAudioPermission, isRecording, startRecording]);
-  
   // Timer countdown
   useEffect(() => {
     if (!loading && !isPaused && timeRemaining > 0 && isConversationActive) {
@@ -160,7 +148,7 @@ const InterviewSession: React.FC = () => {
       
       return () => clearInterval(timer);
     }
-  }, [loading, isPaused, timeRemaining, isConversationActive]);
+  }, [loading, isPaused, timeRemaining, conversationUrl]);
   
   // Handle permissions request
   const handleRequestPermissions = async () => {
@@ -171,10 +159,6 @@ const InterviewSession: React.FC = () => {
       setShowPermissionsDialog(false);
       
       // Start conversation after permissions are granted
-      if (interviewData) {
-        console.log('Starting conversation after permissions granted');
-        startConversation();
-      }
     } catch (error) {
       console.error('Failed to get permissions:', error);
     }
@@ -185,11 +169,6 @@ const InterviewSession: React.FC = () => {
     setHasRequestedPermissions(true);
     setShowPermissionsDialog(false);
     
-    // Start conversation without media permissions
-    if (interviewData) {
-      console.log('Starting conversation without permissions');
-      startConversation();
-    }
   };
   
   const handleNextQuestion = async () => {
@@ -224,11 +203,6 @@ const InterviewSession: React.FC = () => {
         stopRecording();
       }
       
-      // End Tavus conversation
-      if (conversation) {
-        await endConversation();
-      }
-
       if (id && interviewData) {
         // Prepare mock feedback data
         const feedbackData = {
@@ -277,20 +251,9 @@ const InterviewSession: React.FC = () => {
     // Cleanup media streams
     cleanupMedia();
     
-    if (conversation) {
-      await endConversation();
-    }
     navigate('/dashboard');
   };
 
-  const handleTavusVideoReady = () => {
-    console.log('Tavus video is ready');
-  };
-
-  const handleTavusVideoError = (error: string) => {
-    console.error('Tavus video error:', error);
-  };
-  
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white">
@@ -314,6 +277,24 @@ const InterviewSession: React.FC = () => {
     );
   }
   
+  // Show video setup if not completed
+  if (showVideoSetup && interviewData) {
+    return (
+      <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+        <div className="container-custom mx-auto">
+          <VideoInterviewSetup
+            interviewType={interviewData.interview_types?.type || 'technical'}
+            participantName="AI Interviewer"
+            role={interviewData.role}
+            company={interviewData.company || undefined}
+            onSetupComplete={handleVideoSetupComplete}
+            onError={handleVideoError}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       {/* Top controls */}
@@ -368,88 +349,13 @@ const InterviewSession: React.FC = () => {
         <div className="flex-1 container-custom mx-auto flex flex-col md:flex-row gap-4 p-4">
           {/* Video area with Tavus integration */}
           <div className="md:w-2/3 relative">
-            <TavusVideoPlayer
-              conversationUrl={conversation?.conversation_url}
-              isLoading={tavusLoading || !conversation}
-              error={tavusError || undefined}
-              onVideoReady={handleTavusVideoReady}
-              onVideoError={handleTavusVideoError}
+            <TavusVideoMeeting
+              conversationUrl={conversationUrl || ''}
+              participantName="AI Interviewer"
+              onMeetingEnd={() => navigate('/dashboard')}
+              onError={handleVideoError}
               className="w-full h-full min-h-[400px]"
-              isMockMode={isMockMode}
             />
-            
-            {/* Interview info overlay */}
-            <div className="absolute bottom-4 left-4 flex items-center gap-3 bg-gray-900 bg-opacity-75 p-3 rounded-lg">
-              <div className="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center">
-                {currentRound?.id === 'screening' && <Users className="h-5 w-5 text-white" />}
-                {currentRound?.id === 'technical' && <Code className="h-5 w-5 text-white" />}
-                {currentRound?.id === 'behavioral' && <MessageSquare className="h-5 w-5 text-white" />}
-                {!currentRound && <MessageSquare className="h-5 w-5 text-white" />}
-              </div>
-              <div>
-                <p className="font-medium">
-                  {currentRound?.name || 'AI Interviewer'}
-                </p>
-                <p className="text-sm text-gray-400">
-                  {currentRound?.description || `${interviewData.interview_types?.title || 'General'} Interview`}
-                  {isMockMode && ' (Demo)'}
-                </p>
-              </div>
-            </div>
-            
-            {/* Round progress indicator for complete interviews */}
-            {availableRounds.length > 1 && (
-              <div className="absolute top-4 left-4 bg-gray-900 bg-opacity-75 p-3 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <Users className="h-4 w-4 text-white" />
-                  <span className="text-sm text-white font-medium">Interview Progress</span>
-                </div>
-                <div className="flex gap-2">
-                  {availableRounds.map((round, index) => (
-                    <div
-                      key={round.id}
-                      className={`w-3 h-3 rounded-full ${
-                        completedRounds.includes(round.id)
-                          ? 'bg-green-500'
-                          : currentRound?.id === round.id
-                            ? 'bg-primary-500'
-                            : 'bg-gray-600'
-                      }`}
-                      title={round.name}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {/* Self video placeholder */}
-            <div className="absolute top-4 right-4 w-32 h-24 bg-gray-700 rounded-lg overflow-hidden shadow-lg border border-gray-600">
-              <UserVideoFeed
-                videoStream={videoStream}
-                hasVideoPermission={hasVideoPermission}
-                hasAudioPermission={hasAudioPermission}
-                onToggleVideo={toggleVideo}
-                onToggleAudio={toggleAudio}
-                className="w-full h-full"
-              />
-            </div>
-            
-            {isPaused && (
-              <div className="absolute inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center">
-                <div className="text-center">
-                  <PauseCircle className="h-16 w-16 text-white mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Interview Paused</h3>
-                  <p className="text-gray-400 mb-6">Take a moment to collect your thoughts</p>
-                  <Button
-                    onClick={togglePause}
-                    className="inline-flex items-center gap-2"
-                  >
-                    <PlayCircle className="h-5 w-5" />
-                    Resume Interview
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
           
           {/* Question and response area */}
@@ -496,7 +402,7 @@ const InterviewSession: React.FC = () => {
                   />
                   <p className="text-gray-300">
                     {isRecording 
-                      ? (isMockMode ? 'Demo: Recording audio...' : 'Recording your response...') 
+                      ? 'Recording your response...'
                       : 'Ready to record your response'
                     }
                   </p>
@@ -506,7 +412,7 @@ const InterviewSession: React.FC = () => {
                   <MicOff className="h-8 w-8 text-gray-500 mx-auto mb-2" />
                   <p className="text-gray-400">
                     {isConversationActive 
-                      ? 'Microphone access not granted' 
+                      ? 'Microphone access not granted'
                       : 'Waiting for interview to start...'
                     }
                   </p>
@@ -557,21 +463,19 @@ const InterviewSession: React.FC = () => {
           
           <div className="flex items-center gap-3">
             {/* Show next round button if in complete interview mode */}
-            {availableRounds.length > 1 && currentRound && (
+            {false && (
               <div className="text-sm text-gray-400">
-                Round {availableRounds.findIndex(r => r.id === currentRound.id) + 1} of {availableRounds.length}
+                Round 1 of 1
               </div>
             )}
             
             <Button
               onClick={handleNextQuestion}
               className="btn-primary"
-              disabled={(!isConversationActive && !isMockMode) || isRequestingPermissions}
+              disabled={!conversationUrl || isRequestingPermissions}
             >
               {currentQuestion < interviewData.questions.length - 1 
                 ? 'Next Question' 
-                : availableRounds.length > 1 && currentRound && availableRounds.findIndex(r => r.id === currentRound.id) < availableRounds.length - 1
-                  ? 'Next Round'
                   : 'Finish Interview'
               }
               <ChevronRight className="h-4 w-4 ml-1" />
