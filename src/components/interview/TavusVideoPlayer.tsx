@@ -9,6 +9,7 @@ interface TavusVideoPlayerProps {
   onVideoReady?: () => void;
   onVideoError?: (error: string) => void;
   className?: string;
+  isMockMode?: boolean;
 }
 
 const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
@@ -17,7 +18,8 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
   error,
   onVideoReady,
   onVideoError,
-  className = ''
+  className = '',
+  isMockMode = false
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isMuted, setIsMuted] = useState(false);
