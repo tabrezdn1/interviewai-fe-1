@@ -71,6 +71,12 @@ export const getBaseUrl = () => {
   return window.location.origin;
 };
 
+// Helper function to validate UUID format
+export function isValidUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+}
+
 // Supabase utility functions
 export async function fetchInterviewTypes() {
   try {
@@ -146,6 +152,12 @@ export async function fetchDifficultyLevels() {
 
 export async function fetchUserInterviews(userId: string) {
   try {
+    // Check if userId is a valid UUID before making Supabase query
+    if (!isValidUUID(userId)) {
+      console.warn(`Invalid UUID format for user ID: ${userId}, returning mock data`);
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('interviews')
       .select(`
