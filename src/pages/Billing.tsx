@@ -306,7 +306,7 @@ const Billing: React.FC = () => {
                             <p className="font-medium">
                               •••• •••• •••• {method.last4}
                               {method.isDefault && (
-                                <Badge variant="outline" className="ml-2 text-xs">Default</Badge>
+                                <Badge variant="outline\" className="ml-2 text-xs">Default</Badge>
                               )}
                             </p>
                             <p className="text-sm text-gray-500">
