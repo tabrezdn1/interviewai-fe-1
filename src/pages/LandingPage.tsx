@@ -44,17 +44,17 @@ const LandingPage: React.FC = () => {
       {/* Hero Section */}
       <section className="min-h-screen flex items-center relative overflow-hidden">
         {/* Badge in top right corner */}
-        <div className="fixed top-4 right-4 z-50 md:top-6 md:right-6 lg:top-8 lg:right-8">
+        <div className="fixed top-20 right-4 z-40 sm:top-6 sm:right-6 md:top-4 md:right-4 lg:top-8 lg:right-8">
           <div className="relative group">
             {/* Glow effect behind badge */}
             <div className="absolute -inset-2 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             
             {/* Badge container with modern styling */}
-            <div className="relative bg-white/90 backdrop-blur-md rounded-full p-2 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105">
+            <div className="relative bg-white/90 backdrop-blur-md rounded-full p-1.5 shadow-lg border border-white/20 hover:shadow-xl transition-all duration-300 hover:scale-105 sm:p-2">
               <img 
                 src="/white_circle_360x360.png" 
                 alt="Powered by Bolt.new" 
-                className="w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 object-contain rounded-full"
+                className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 object-contain rounded-full"
                 loading="lazy"
               />
             </div>
