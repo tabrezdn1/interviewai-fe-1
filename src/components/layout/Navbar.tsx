@@ -146,13 +146,17 @@ const Navbar: React.FC = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings">
                       <Settings className="h-4 w-4 mr-2" />
                       Settings
+                      </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/pricing">
                       <CreditCard className="h-4 w-4 mr-2" />
                       Billing
+                      </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
@@ -233,13 +237,17 @@ const Navbar: React.FC = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start gap-2 text-sm">
+                    <Button asChild variant="outline" className="w-full justify-start gap-2 text-sm">
+                      <Link to="/settings">
                       <Settings className="h-4 w-4" />
                       Settings
+                      </Link>
                     </Button>
-                    <Button variant="outline" className="w-full justify-start gap-2 text-sm">
+                    <Button asChild variant="outline" className="w-full justify-start gap-2 text-sm">
+                      <Link to="/pricing">
                       <CreditCard className="h-4 w-4" />
                       Billing
+                      </Link>
                     </Button>
                     <Button
                       onClick={async () => {
