@@ -77,22 +77,42 @@ const Navbar: React.FC = () => {
 
         {/* Tab-style navigation for landing page */}
         {isHome && !user && (
-          <div className="hidden md:flex items-center gap-1 bg-white/20 backdrop-blur-md rounded-full p-1 border border-white/30">
+          <div className={cn(
+            "hidden md:flex items-center gap-1 rounded-full p-1 border transition-all duration-300",
+            isTransparent 
+              ? "bg-white/20 backdrop-blur-md border-white/30" 
+              : "bg-gray-100 border-gray-200 shadow-sm"
+          )}>
             <button
               onClick={() => scrollToSection('features')}
-              className="px-4 py-2 rounded-full text-white hover:text-white hover:bg-white/30 transition-all text-sm font-medium shadow-sm"
+              className={cn(
+                "px-4 py-2 rounded-full transition-all text-sm font-medium",
+                isTransparent 
+                  ? "text-white hover:text-white hover:bg-white/30 shadow-sm" 
+                  : "text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm"
+              )}
             >
               Features
             </button>
             <button
               onClick={() => scrollToSection('pricing')}
-              className="px-4 py-2 rounded-full text-white hover:text-white hover:bg-white/30 transition-all text-sm font-medium shadow-sm"
+              className={cn(
+                "px-4 py-2 rounded-full transition-all text-sm font-medium",
+                isTransparent 
+                  ? "text-white hover:text-white hover:bg-white/30 shadow-sm" 
+                  : "text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm"
+              )}
             >
               Pricing
             </button>
             <button
               onClick={() => scrollToSection('about')}
-              className="px-4 py-2 rounded-full text-white hover:text-white hover:bg-white/30 transition-all text-sm font-medium shadow-sm"
+              className={cn(
+                "px-4 py-2 rounded-full transition-all text-sm font-medium",
+                isTransparent 
+                  ? "text-white hover:text-white hover:bg-white/30 shadow-sm" 
+                  : "text-gray-700 hover:text-gray-900 hover:bg-white shadow-sm"
+              )}
             >
               About
             </button>
