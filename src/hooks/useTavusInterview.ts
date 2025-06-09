@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getTavusAPI, TavusConversationResponse, TavusReplicaResponse } from '../lib/tavus';
+import { getTavusAPI, TavusConversationResponse, TavusReplicaResponse, isTavusConfigured } from '../lib/tavus';
 
 interface UseTavusInterviewOptions {
   interviewType?: string;
@@ -16,6 +16,7 @@ interface UseTavusInterviewReturn {
   startConversation: () => Promise<void>;
   endConversation: () => Promise<void>;
   isConversationActive: boolean;
+  isMockMode: boolean;
 }
 
 export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTavusInterviewReturn => {
@@ -24,18 +25,18 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isConversationActive, setIsConversationActive] = useState(false);
+  const [isMockMode, setIsMockMode] = useState(false);
 
   // Load available replicas on mount
   useEffect(() => {
     const loadReplicas = async () => {
-      // Check if Tavus API key is configured
-      const apiKey = import.meta.env.VITE_TAVUS_API_KEY;
-      if (!apiKey || apiKey === 'your_tavus_api_key_here') {
+      if (!isTavusConfigured()) {
         console.warn('Tavus API key not configured. Using mock AI interviewer.');
+        setIsMockMode(true);
         // Create a mock replica for development
         setReplicas([{
           replica_id: 'mock-replica-123',
-          replica_name: 'AI Interviewer',
+          replica_name: 'AI Interviewer (Demo Mode)',
           status: 'ready',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -57,6 +58,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
         console.error('Failed to load Tavus replicas:', err);
         setError(err instanceof Error ? err.message : 'Failed to load AI interviewers');
         
+        setIsMockMode(true);
         // Fallback to mock replica if API fails
         setReplicas([{
           replica_id: 'mock-replica-123',
@@ -80,6 +82,15 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
     if (!Array.isArray(replicas) || replicas.length === 0) {
       console.warn('Replicas is not a valid array or is empty:', replicas);
       return null;
+    }
+
+    // Check for default replica ID from environment
+    const defaultReplicaId = import.meta.env.VITE_TAVUS_DEFAULT_REPLICA_ID;
+    if (defaultReplicaId) {
+      const defaultReplica = replicas.find(r => r.replica_id === defaultReplicaId && r.status === 'ready');
+      if (defaultReplica) {
+        return defaultReplica.replica_id;
+      }
     }
 
     // For now, select the first available replica
@@ -122,6 +133,7 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
       const conversationRequest = {
         replica_id: replicaId,
         conversation_name: `Interview - ${options.role || 'General'} - ${new Date().toISOString()}`,
+        callback_url: `${window.location.origin}/api/tavus/callback`, // Optional webhook
         properties: {
           max_call_duration: 3600, // 1 hour max
           participant_left_timeout: 30,
@@ -182,5 +194,6 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
     startConversation,
     endConversation,
     isConversationActive,
+    isMockMode,
   };
 };

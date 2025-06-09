@@ -119,4 +119,9 @@ export const getTavusAPI = (): TavusAPI => {
   return tavusInstance;
 };
 
+// Helper function to check if Tavus is properly configured
+export const isTavusConfigured = (): boolean => {
+  const apiKey = import.meta.env.VITE_TAVUS_API_KEY;
+  return !!(apiKey && apiKey !== 'your_tavus_api_key_here');
+};
 export type { TavusConversationRequest, TavusConversationResponse, TavusReplicaResponse };

@@ -87,13 +87,13 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
   }
 
   // Check if this is a mock conversation URL
-  const isMockConversation = conversationUrl.includes('mock-conversation');
+  const isMockConversation = conversationUrl.includes('mock-conversation-url');
 
   if (isMockConversation) {
     return (
       <div className={`relative bg-gray-800 rounded-xl overflow-hidden ${className}`}>
         {/* Mock AI Interviewer Video */}
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-900">
+        <div className="w-full h-full min-h-[400px] flex items-center justify-center bg-gradient-to-br from-blue-900 to-purple-900">
           <div className="text-center text-white p-8">
             <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
               <Video className="h-12 w-12 text-white" />
@@ -103,6 +103,9 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 rounded-full text-green-300 text-xs">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               Live
+            </div>
+            <div className="mt-4 text-xs text-blue-300">
+              Demo Mode - Add your Tavus API key to enable real AI video
             </div>
           </div>
         </div>
@@ -136,7 +139,7 @@ const TavusVideoPlayer: React.FC<TavusVideoPlayerProps> = ({
       <iframe
         ref={iframeRef}
         src={conversationUrl}
-        className="w-full h-full border-0"
+        className="w-full h-full min-h-[400px] border-0"
         allow="camera; microphone; autoplay; encrypted-media; fullscreen"
         allowFullScreen
         title="Tavus AI Interviewer"

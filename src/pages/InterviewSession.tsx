@@ -55,8 +55,12 @@ const InterviewSession: React.FC = () => {
     error: tavusError,
     startConversation,
     endConversation,
-    isConversationActive
+    isConversationActive,
+    isMockMode
   } = useTavusInterview({
+    interviewType: interviewData?.interview_types?.type,
+    role: interviewData?.role,
+    difficulty: interviewData?.difficulty_levels?.value,
     autoStart: false // We'll start manually after loading interview data
   });
   
@@ -295,6 +299,7 @@ const InterviewSession: React.FC = () => {
                 <p className="font-medium">AI Interviewer</p>
                 <p className="text-sm text-gray-400">
                   {interviewData.interview_types?.title || 'General'} Interview
+                  {isMockMode && ' (Demo)'}
                 </p>
               </div>
             </div>
@@ -365,7 +370,7 @@ const InterviewSession: React.FC = () => {
             <div className="bg-gray-800 rounded-xl p-6">
               <h2 className="text-lg font-semibold mb-4">Your Response</h2>
               
-              {micEnabled ? (
+              {micEnabled && isConversationActive ? (
                 <div className="bg-gray-700 rounded-lg p-4 text-center">
                   <div className="audio-visualizer flex items-end justify-center h-12 mb-3 gap-1">
                     {[...Array(20)].map((_, i) => (
@@ -379,12 +384,16 @@ const InterviewSession: React.FC = () => {
                       ></div>
                     ))}
                   </div>
-                  <p className="text-gray-300">Listening to your response...</p>
+                  <p className="text-gray-300">
+                    {isMockMode ? 'Demo: Simulating audio input...' : 'Listening to your response...'}
+                  </p>
                 </div>
               ) : (
                 <div className="bg-gray-700 rounded-lg p-4 text-center">
                   <MicOff className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-                  <p className="text-gray-400">Microphone is disabled</p>
+                  <p className="text-gray-400">
+                    {isConversationActive ? 'Microphone is disabled' : 'Waiting for interview to start...'}
+                  </p>
                 </div>
               )}
             </div>
@@ -427,7 +436,7 @@ const InterviewSession: React.FC = () => {
           <Button
             onClick={handleNextQuestion}
             className="btn-primary"
-            disabled={!isConversationActive}
+            disabled={!isConversationActive && !isMockMode}
           >
             {currentQuestion < interviewData.questions.length - 1 ? 'Next Question' : 'Finish Interview'}
           </Button>
