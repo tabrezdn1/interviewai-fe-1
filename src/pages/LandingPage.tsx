@@ -305,8 +305,111 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="py-32 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-20">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-4">
+                <Award className="h-4 w-4" />
+                <span>Simple Pricing</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 font-heading">Choose Your Plan</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Get started with our AI-powered interview practice. All plans include personalized feedback and performance analytics.
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Billing Toggle */}
+          <div className="flex justify-center mb-12">
+            <div className="bg-muted p-1 rounded-lg">
+              <div className="flex">
+                <button className="px-4 py-2 rounded-md bg-background text-foreground font-medium text-sm">
+                  Monthly
+                </button>
+                <button className="px-4 py-2 rounded-md text-muted-foreground font-medium text-sm">
+                  Annual <span className="text-green-600 text-xs ml-1">Save 20%</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Intro Plan */}
+            <PricingCard
+              title="Intro"
+              subtitle="Perfect for getting started"
+              price="$49"
+              period="per month"
+              annualPrice="$499"
+              features={[
+                "5 AI interview sessions",
+                "Basic feedback analysis",
+                "Standard question library",
+                "Email support",
+                "Progress tracking"
+              ]}
+              buttonText="Start Free Trial"
+              delay={0}
+            />
+
+            {/* Mid Plan */}
+            <PricingCard
+              title="Professional"
+              subtitle="Most popular for job seekers"
+              price="$59"
+              period="per month"
+              annualPrice="$549"
+              features={[
+                "20 AI interview sessions",
+                "Advanced feedback & coaching",
+                "Industry-specific questions",
+                "Video analysis & tips",
+                "Priority support",
+                "Performance analytics"
+              ]}
+              buttonText="Get Started"
+              popular={true}
+              delay={0.1}
+            />
+
+            {/* Senior Plan */}
+            <PricingCard
+              title="Executive"
+              subtitle="For senior-level positions"
+              price="$69"
+              period="per month"
+              annualPrice="$599"
+              features={[
+                "50 AI interview sessions",
+                "Executive-level scenarios",
+                "Custom interview prep",
+                "1-on-1 coaching calls",
+                "White-glove support",
+                "Advanced analytics",
+                "Leadership assessments"
+              ]}
+              buttonText="Contact Sales"
+              delay={0.2}
+            />
+          </div>
+
+          <div className="text-center mt-12">
+            <p className="text-muted-foreground text-sm">
+              All plans include a 7-day free trial. No credit card required.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works */}
-      <section className="py-32 bg-background relative overflow-hidden">
+      <section className="py-32 bg-muted/30 relative overflow-hidden">
         {/* Background pattern */}
         <div className="absolute inset-0 z-0">
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-800 to-transparent"></div>
@@ -358,7 +461,7 @@ const LandingPage: React.FC = () => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-32 bg-muted/30">
+      <section className="py-32 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-20">
             <motion.div
@@ -388,6 +491,44 @@ const LandingPage: React.FC = () => {
                 image={testimonial.image}
               />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section id="about" className="py-32 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+                <User className="h-4 w-4" />
+                <span>About</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold mb-8 font-heading">About InterviewAI</h2>
+              <div className="max-w-2xl mx-auto">
+                <p className="text-lg text-muted-foreground mb-8">
+                  This product was developed by Tabrez.
+                </p>
+                <div className="bg-card rounded-xl p-8 shadow-sm border">
+                  <div className="flex items-center justify-center mb-6">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                      <User className="h-8 w-8 text-white" />
+                    </div>
+                  </div>
+                  <h3 className="text-xl font-semibold mb-4">Built with Innovation</h3>
+                  <p className="text-muted-foreground">
+                    InterviewAI represents the cutting edge of AI-powered career preparation, 
+                    combining advanced machine learning with practical interview coaching to help 
+                    job seekers succeed in today's competitive market.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -480,7 +621,7 @@ const LandingPage: React.FC = () => {
               <h3 className="font-medium text-lg mb-4">Product</h3>
               <ul className="space-y-3">
                 <li><a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
+                <li><a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
                 <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Testimonials</a></li>
                 <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</a></li>
               </ul>
@@ -489,7 +630,7 @@ const LandingPage: React.FC = () => {
             <div>
               <h3 className="font-medium text-lg mb-4">Company</h3>
               <ul className="space-y-3">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">About</a></li>
+                <li><a href="#about" className="text-muted-foreground hover:text-foreground transition-colors">About</a></li>
                 <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Careers</a></li>
                 <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Contact</a></li>
                 <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Blog</a></li>
@@ -562,6 +703,81 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, del
           </a>
         </div>
       </div>
+    </motion.div>
+  );
+};
+
+interface PricingCardProps {
+  title: string;
+  subtitle: string;
+  price: string;
+  period: string;
+  annualPrice: string;
+  features: string[];
+  buttonText: string;
+  popular?: boolean;
+  delay: number;
+}
+
+const PricingCard: React.FC<PricingCardProps> = ({ 
+  title, 
+  subtitle, 
+  price, 
+  period, 
+  annualPrice, 
+  features, 
+  buttonText, 
+  popular = false, 
+  delay 
+}) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay }}
+      className={`relative bg-card rounded-xl p-8 shadow-sm border ${
+        popular ? 'border-primary shadow-lg scale-105' : ''
+      }`}
+    >
+      {popular && (
+        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+          <span className="bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-medium">
+            Most Popular
+          </span>
+        </div>
+      )}
+      
+      <div className="text-center mb-8">
+        <h3 className="text-xl font-semibold mb-2">{title}</h3>
+        <p className="text-muted-foreground text-sm mb-4">{subtitle}</p>
+        <div className="mb-2">
+          <span className="text-4xl font-bold">{price}</span>
+          <span className="text-muted-foreground ml-1">{period}</span>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          or {annualPrice} annually
+        </p>
+      </div>
+      
+      <ul className="space-y-3 mb-8">
+        {features.map((feature, index) => (
+          <li key={index} className="flex items-start gap-3">
+            <Check className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+            <span className="text-sm">{feature}</span>
+          </li>
+        ))}
+      </ul>
+      
+      <Button 
+        asChild 
+        className={`w-full ${popular ? 'bg-primary hover:bg-primary/90' : ''}`}
+        variant={popular ? 'default' : 'outline'}
+      >
+        <Link to="/login?signup=true">
+          {buttonText}
+        </Link>
+      </Button>
     </motion.div>
   );
 };

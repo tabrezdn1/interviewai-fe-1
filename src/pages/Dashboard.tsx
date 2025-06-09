@@ -179,11 +179,6 @@ const Dashboard: React.FC = () => {
                   Welcome back, {user?.name}! Manage your interview practice sessions.
                 </p>
               </div>
-              <Button asChild variant="default" className="md:self-start">
-                <Link to="/setup" className="gap-2 inline-flex items-center">
-                  <PlusCircle className="h-4 w-4" /> New Interview
-                </Link>
-              </Button>
             </div>
           </motion.div>
         </div>
@@ -277,7 +272,7 @@ const Dashboard: React.FC = () => {
               
               <div className="relative p-6 md:p-8 flex flex-col md:flex-row items-center justify-between">
                 <div>
-                  <Badge variant="default" className="bg-white/20 text-white border-none mb-3">New Interview</Badge>
+                  <Badge variant="default" className="bg-white/20 text-white border-none mb-3">Start Interview</Badge>
                   <h3 className="text-xl md:text-2xl font-semibold mb-2 text-white">Ready for your next interview?</h3>
                   <p className="text-white/90 max-w-lg">Set up a new interview simulation with our AI and prepare for success</p>
                 </div>
@@ -427,7 +422,7 @@ const Dashboard: React.FC = () => {
                           
                           <div className="flex items-center gap-3">
                             {interview.score && (
-                              <Badge variant="success\" className="h-6 flex items-center justify-center">
+                              <Badge variant="success" className="h-6 flex items-center justify-center">
                                 Score: {interview.score}%
                               </Badge>
                             )}

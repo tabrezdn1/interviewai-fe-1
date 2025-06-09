@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User, LogOut, BarChart2, MessageSquare } from 'lucide-react';
+import { Menu, X, User, LogOut, BarChart2, MessageSquare, Settings, CreditCard, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../ui/dropdown-menu';
 import { cn } from '../../lib/utils';
 
 const Navbar: React.FC = () => {
@@ -32,6 +33,14 @@ const Navbar: React.FC = () => {
 
   const isHome = location.pathname === '/';
   const isTransparent = isHome && !scrolled;
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+    closeMenu();
+  };
 
   return (
     <nav 
@@ -66,84 +75,83 @@ const Navbar: React.FC = () => {
           </span>
         </Link>
 
+        {/* Tab-style navigation for landing page */}
+        {isHome && !user && (
+          <div className="hidden md:flex items-center gap-1 bg-white/10 backdrop-blur-md rounded-full p-1">
+            <button
+              onClick={() => scrollToSection('features')}
+              className="px-4 py-2 rounded-full text-white/90 hover:text-white hover:bg-white/20 transition-all text-sm font-medium"
+            >
+              Features
+            </button>
+            <button
+              onClick={() => scrollToSection('pricing')}
+              className="px-4 py-2 rounded-full text-white/90 hover:text-white hover:bg-white/20 transition-all text-sm font-medium"
+            >
+              Pricing
+            </button>
+            <button
+              onClick={() => scrollToSection('about')}
+              className="px-4 py-2 rounded-full text-white/90 hover:text-white hover:bg-white/20 transition-all text-sm font-medium"
+            >
+              About
+            </button>
+          </div>
+        )}
+
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center gap-8">
-          <div className="flex gap-6">
-            {user ? (
-              <>
-                <NavLink 
-                  to="/dashboard" 
-                  label="Dashboard" 
-                  isTransparent={isTransparent}
-                />
-                <NavLink 
-                  to="/setup" 
-                  label="New Interview" 
-                  isTransparent={isTransparent}
-                />
-              </>
-            ) : (
-              <>
-                <NavLink 
-                  to="/#features" 
-                  label="Features" 
-                  isTransparent={isTransparent}
-                />
-                <NavLink 
-                  to="/pricing" 
-                  label="Pricing" 
-                  isTransparent={isTransparent}
-                />
-                <NavLink 
-                  to="/about" 
-                  label="About" 
-                  isTransparent={isTransparent}
-                />
-              </>
-            )}
-          </div>
-          
           <div className="flex items-center gap-3">
             {user ? (
               <div className="flex items-center gap-3">
-                <Link 
-                  to="/dashboard" 
-                  className="flex items-center gap-2 hover:text-primary transition-colors"
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>
-                      {user.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className={cn(
-                    "font-medium", 
-                    isTransparent ? "text-white" : "text-foreground"
-                  )}>
-                    {user.name}
-                  </span>
-                </Link>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={async () => {
-                    console.log('Logout button clicked');
-                    try {
-                      await logout();
-                    } catch (error) {
-                      console.error('Logout failed:', error);
-                      // Force redirect even if logout fails
-                      window.location.href = '/';
-                    }
-                  }}
-                  className={cn(
-                    "flex items-center gap-2",
-                    isTransparent ? "text-white hover:bg-white/10" : ""
-                  )}
-                >
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center gap-2 hover:bg-transparent">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarFallback>
+                          {user.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className={cn(
+                        "font-medium", 
+                        isTransparent ? "text-white" : "text-foreground"
+                      )}>
+                        {user.name}
+                      </span>
+                      <ChevronDown className={cn(
+                        "h-4 w-4", 
+                        isTransparent ? "text-white" : "text-foreground"
+                      )} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Settings
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Billing
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={async () => {
+                        console.log('Logout button clicked');
+                        try {
+                          await logout();
+                        } catch (error) {
+                          console.error('Logout failed:', error);
+                          // Force redirect even if logout fails
+                          window.location.href = '/';
+                        }
+                      }}
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <>
@@ -193,8 +201,6 @@ const Navbar: React.FC = () => {
           <div className="container-custom mx-auto flex flex-col space-y-3">
             {user ? (
               <>
-                <MobileNavLink to="/dashboard\" label="Dashboard\" onClick={closeMenu} />
-                <MobileNavLink to="/setup" label="New Interview" onClick={closeMenu} />
                 <div className="pt-3 border-t border-gray-200">
                   <div className="flex items-center gap-3 mb-4">
                     <Avatar className="h-8 w-8">
@@ -205,31 +211,61 @@ const Navbar: React.FC = () => {
                     </Avatar>
                     <span className="font-medium">{user.name}</span>
                   </div>
-                  <Button
-                    onClick={async () => {
-                      console.log('Mobile logout button clicked');
-                      try {
-                        await logout();
-                      } catch (error) {
-                        console.error('Mobile logout failed:', error);
-                        // Force redirect even if logout fails
-                        window.location.href = '/';
-                      }
-                      closeMenu();
-                    }}
-                    variant="outline"
-                    className="w-full justify-center gap-2 text-sm"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </Button>
+                  
+                  <div className="space-y-2">
+                    <Button variant="outline" className="w-full justify-start gap-2 text-sm">
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start gap-2 text-sm">
+                      <CreditCard className="h-4 w-4" />
+                      Billing
+                    </Button>
+                    <Button
+                      onClick={async () => {
+                        console.log('Mobile logout button clicked');
+                        try {
+                          await logout();
+                        } catch (error) {
+                          console.error('Mobile logout failed:', error);
+                          // Force redirect even if logout fails
+                          window.location.href = '/';
+                        }
+                        closeMenu();
+                      }}
+                      variant="outline"
+                      className="w-full justify-start gap-2 text-sm"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Logout
+                    </Button>
+                  </div>
                 </div>
               </>
             ) : (
               <>
-                <MobileNavLink to="/#features" label="Features" onClick={closeMenu} />
-                <MobileNavLink to="/pricing" label="Pricing" onClick={closeMenu} />
-                <MobileNavLink to="/about" label="About" onClick={closeMenu} />
+                {isHome && (
+                  <>
+                    <button
+                      onClick={() => scrollToSection('features')}
+                      className="py-2 px-4 font-medium text-foreground text-left"
+                    >
+                      Features
+                    </button>
+                    <button
+                      onClick={() => scrollToSection('pricing')}
+                      className="py-2 px-4 font-medium text-foreground text-left"
+                    >
+                      Pricing
+                    </button>
+                    <button
+                      onClick={() => scrollToSection('about')}
+                      className="py-2 px-4 font-medium text-foreground text-left"
+                    >
+                      About
+                    </button>
+                  </>
+                )}
                 <div className="pt-3 border-t border-gray-200 flex flex-col gap-3">
                   <Button 
                     asChild
@@ -257,61 +293,6 @@ const Navbar: React.FC = () => {
         </motion.div>
       )}
     </nav>
-  );
-};
-
-interface NavLinkProps {
-  to: string;
-  label: string;
-  isTransparent: boolean;
-}
-
-const NavLink: React.FC<NavLinkProps> = ({ to, label, isTransparent }) => {
-  const location = useLocation();
-  const isActive = location.pathname === to || location.hash === to;
-  
-  return (
-    <Link 
-      to={to} 
-      className={cn(
-        "font-medium transition-colors relative group",
-        isActive 
-          ? "text-primary" 
-          : isTransparent 
-            ? "text-white/90 hover:text-white" 
-            : "text-foreground hover:text-primary"
-      )}
-    >
-      {label}
-      <span className={cn(
-        "absolute bottom-0 left-0 w-0 h-0.5 bg-current transition-all duration-300 group-hover:w-full",
-        isActive ? "w-full" : "w-0"
-      )}></span>
-    </Link>
-  );
-};
-
-interface MobileNavLinkProps {
-  to: string;
-  label: string;
-  onClick: () => void;
-}
-
-const MobileNavLink: React.FC<MobileNavLinkProps> = ({ to, label, onClick }) => {
-  const location = useLocation();
-  const isActive = location.pathname === to || location.hash === to;
-  
-  return (
-    <Link 
-      to={to} 
-      className={cn(
-        "py-2 px-4 font-medium", 
-        isActive ? "text-primary" : "text-foreground"
-      )}
-      onClick={onClick}
-    >
-      {label}
-    </Link>
   );
 };
 
