@@ -250,7 +250,7 @@ const LandingPage: React.FC = () => {
               transition={{ duration: 0.5 }}
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-950/50 text-primary-800 dark:text-primary-300 text-sm font-medium mb-4">
-                <Sparkles className="h-4 w-4" />
+                <Sparkles className="h-4 w-4 text-primary-600" />
                 <span>Powerful Features</span>
               </div>
               <h2 className="text-4xl md:text-5xl font-bold mb-4 font-heading">Everything You Need to Succeed</h2>
@@ -329,15 +329,15 @@ const LandingPage: React.FC = () => {
 
           {/* Billing Toggle */}
           <div className="flex justify-center mb-12">
-            <div className="bg-muted p-1 rounded-lg inline-flex">
-              <div className="flex relative">
+            <div className="bg-gray-100 p-1 rounded-xl inline-flex relative shadow-inner">
+              <div className="flex relative z-10">
                 <button 
                   onClick={() => setIsAnnual(false)}
                   className={cn(
-                    "px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 relative z-10",
+                    "px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-300 relative z-10",
                     !isAnnual 
-                      ? "text-foreground" 
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "text-white" 
+                      : "text-gray-600 hover:text-gray-800"
                   )}
                 >
                   Monthly
@@ -345,10 +345,10 @@ const LandingPage: React.FC = () => {
                 <button 
                   onClick={() => setIsAnnual(true)}
                   className={cn(
-                    "px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 relative z-10",
+                    "px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-300 relative z-10",
                     isAnnual 
-                      ? "text-foreground" 
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "text-white" 
+                      : "text-gray-600 hover:text-gray-800"
                   )}
                 >
                   Annual <span className="text-green-600 text-xs ml-1">Save 20%</span>
@@ -357,7 +357,7 @@ const LandingPage: React.FC = () => {
                 {/* Sliding background */}
                 <div 
                   className={cn(
-                    "absolute top-1 bottom-1 bg-background rounded-md shadow-sm transition-all duration-200 ease-out",
+                    "absolute top-1 bottom-1 bg-gradient-to-r from-primary to-accent rounded-lg shadow-lg transition-all duration-300 ease-out",
                     isAnnual ? "left-[50%] right-1" : "left-1 right-[50%]"
                   )}
                 />

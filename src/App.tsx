@@ -10,6 +10,8 @@ import InterviewSession from './pages/InterviewSession';
 import FeedbackAnalysis from './pages/FeedbackAnalysis';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
+import Settings from './pages/Settings';
+import Pricing from './pages/Pricing';
 
 // Components
 import Navbar from './components/layout/Navbar';
@@ -30,6 +32,15 @@ function App() {
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<Login />} />
+              <Route 
+                path="/settings" 
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/pricing" element={<Pricing />} />
               <Route 
                 path="/dashboard" 
                 element={
