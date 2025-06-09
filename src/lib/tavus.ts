@@ -6,6 +6,7 @@ interface TavusConfig {
 
 interface TavusConversationRequest {
   replica_id: string;
+  persona_id: string; // Added persona_id as required
   conversation_name?: string;
   callback_url?: string;
   properties?: {
@@ -23,6 +24,7 @@ interface InterviewRound {
   name: string;
   description: string;
   replicaId: string;
+  personaId: string; // Added persona_id for each round
   duration: number; // in minutes
   icon: string;
 }
@@ -46,42 +48,59 @@ interface TavusReplicaResponse {
   thumbnail_url?: string;
 }
 
+interface TavusPersonaResponse {
+  persona_id: string;
+  persona_name: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Interview round configurations
 export const getInterviewRounds = (): InterviewRound[] => {
   const hrReplicaId = import.meta.env.VITE_TAVUS_HR_REPLICA_ID;
+  const hrPersonaId = import.meta.env.VITE_TAVUS_HR_PERSONA_ID;
   const technicalReplicaId = import.meta.env.VITE_TAVUS_TECHNICAL_REPLICA_ID;
+  const technicalPersonaId = import.meta.env.VITE_TAVUS_TECHNICAL_PERSONA_ID;
   const behavioralReplicaId = import.meta.env.VITE_TAVUS_BEHAVIORAL_REPLICA_ID;
+  const behavioralPersonaId = import.meta.env.VITE_TAVUS_BEHAVIORAL_PERSONA_ID;
 
   const rounds: InterviewRound[] = [];
 
-  if (hrReplicaId && hrReplicaId !== 'your_hr_replica_id_here') {
+  if (hrReplicaId && hrReplicaId !== 'your_hr_replica_id_here' && 
+      hrPersonaId && hrPersonaId !== 'your_hr_persona_id_here') {
     rounds.push({
       id: 'screening',
       name: 'HR Screening',
       description: 'Initial screening with HR representative',
       replicaId: hrReplicaId,
+      personaId: hrPersonaId,
       duration: 15,
       icon: 'User'
     });
   }
 
-  if (technicalReplicaId && technicalReplicaId !== 'your_technical_replica_id_here') {
+  if (technicalReplicaId && technicalReplicaId !== 'your_technical_replica_id_here' &&
+      technicalPersonaId && technicalPersonaId !== 'your_technical_persona_id_here') {
     rounds.push({
       id: 'technical',
       name: 'Technical Round',
       description: 'Technical interview with engineering lead',
       replicaId: technicalReplicaId,
+      personaId: technicalPersonaId,
       duration: 45,
       icon: 'Code'
     });
   }
 
-  if (behavioralReplicaId && behavioralReplicaId !== 'your_behavioral_replica_id_here') {
+  if (behavioralReplicaId && behavioralReplicaId !== 'your_behavioral_replica_id_here' &&
+      behavioralPersonaId && behavioralPersonaId !== 'your_behavioral_persona_id_here') {
     rounds.push({
       id: 'behavioral',
       name: 'Behavioral Round',
       description: 'Behavioral interview with hiring manager',
       replicaId: behavioralReplicaId,
+      personaId: behavioralPersonaId,
       duration: 30,
       icon: 'MessageSquare'
     });
@@ -90,8 +109,8 @@ export const getInterviewRounds = (): InterviewRound[] => {
   return rounds;
 };
 
-// Get replica ID for specific interview type
-export const getReplicaForInterviewType = (interviewType: string): string | null => {
+// Get replica and persona IDs for specific interview type
+export const getReplicaForInterviewType = (interviewType: string): { replicaId: string | null; personaId: string | null } => {
   const rounds = getInterviewRounds();
   
   // Map interview types to rounds
@@ -105,7 +124,10 @@ export const getReplicaForInterviewType = (interviewType: string): string | null
   const roundId = typeToRoundMap[interviewType];
   const round = rounds.find(r => r.id === roundId);
   
-  return round?.replicaId || null;
+  return {
+    replicaId: round?.replicaId || null,
+    personaId: round?.personaId || null
+  };
 };
 
 class TavusAPI {
@@ -191,6 +213,33 @@ class TavusAPI {
     }
   }
 
+  // Get available personas
+  async getPersonas(): Promise<TavusPersonaResponse[]> {
+    try {
+      const response = await this.makeRequest<any>('/v2/personas');
+      
+      // Handle different possible response formats
+      if (Array.isArray(response)) {
+        return response;
+      } else if (response && typeof response === 'object') {
+        // Check common response wrapper patterns
+        if (Array.isArray(response.data)) {
+          return response.data;
+        } else if (Array.isArray(response.personas)) {
+          return response.personas;
+        } else if (Array.isArray(response.results)) {
+          return response.results;
+        }
+      }
+      
+      console.warn('Unexpected personas response format:', response);
+      return [];
+    } catch (error) {
+      console.error('Error fetching personas:', error);
+      throw error;
+    }
+  }
+
   // Create a new conversation
   async createConversation(
     request: TavusConversationRequest, 
@@ -198,6 +247,14 @@ class TavusAPI {
   ): Promise<TavusConversationResponse> {
     try {
       console.log('Creating Tavus conversation with request:', request);
+      
+      // Validate required fields
+      if (!request.replica_id) {
+        throw new Error('replica_id is required for Tavus conversation');
+      }
+      if (!request.persona_id) {
+        throw new Error('persona_id is required for Tavus conversation');
+      }
       
       const response = await this.makeRequest<TavusConversationResponse>('/v2/conversations', {
         method: 'POST',
@@ -276,13 +333,19 @@ export const isTavusConfigured = (): boolean => {
   const apiKey = import.meta.env.VITE_TAVUS_API_KEY;
   const hasValidApiKey = !!(apiKey && apiKey !== 'your_tavus_api_key_here');
   
+  // Check if at least one complete round is configured (replica + persona)
+  const rounds = getInterviewRounds();
+  const hasValidRounds = rounds.length > 0;
+  
   console.log('Tavus configuration check:', {
     hasApiKey: !!apiKey,
     isValidApiKey: hasValidApiKey,
-    apiKeyLength: apiKey?.length || 0
+    apiKeyLength: apiKey?.length || 0,
+    availableRounds: rounds.length,
+    hasValidRounds
   });
   
-  return hasValidApiKey;
+  return hasValidApiKey && hasValidRounds;
 };
 
 // Debug function to check environment variables
@@ -290,16 +353,22 @@ export const debugTavusConfig = () => {
   const config = {
     apiKey: import.meta.env.VITE_TAVUS_API_KEY,
     hrReplicaId: import.meta.env.VITE_TAVUS_HR_REPLICA_ID,
+    hrPersonaId: import.meta.env.VITE_TAVUS_HR_PERSONA_ID,
     technicalReplicaId: import.meta.env.VITE_TAVUS_TECHNICAL_REPLICA_ID,
-    behavioralReplicaId: import.meta.env.VITE_TAVUS_BEHAVIORAL_REPLICA_ID
+    technicalPersonaId: import.meta.env.VITE_TAVUS_TECHNICAL_PERSONA_ID,
+    behavioralReplicaId: import.meta.env.VITE_TAVUS_BEHAVIORAL_REPLICA_ID,
+    behavioralPersonaId: import.meta.env.VITE_TAVUS_BEHAVIORAL_PERSONA_ID
   };
   
   console.log('Tavus Environment Variables:', {
     hasApiKey: !!config.apiKey,
     apiKeyPreview: config.apiKey ? `${config.apiKey.substring(0, 8)}...` : 'Not set',
     hasHrReplica: !!config.hrReplicaId,
+    hasHrPersona: !!config.hrPersonaId,
     hasTechnicalReplica: !!config.technicalReplicaId,
+    hasTechnicalPersona: !!config.technicalPersonaId,
     hasBehavioralReplica: !!config.behavioralReplicaId,
+    hasBehavioralPersona: !!config.behavioralPersonaId,
     availableRounds: getInterviewRounds().length
   });
   
@@ -310,5 +379,6 @@ export type {
   TavusConversationRequest, 
   TavusConversationResponse, 
   TavusReplicaResponse,
+  TavusPersonaResponse,
   InterviewRound 
 };

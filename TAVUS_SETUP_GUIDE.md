@@ -1,8 +1,8 @@
 # Tavus Integration Setup Guide
 
-## Updated Multi-Replica Setup
+## Updated Multi-Replica Setup with Personas
 
-This integration now supports **three different AI interviewers** for different interview rounds:
+This integration now supports **three different AI interviewers** for different interview rounds, each with their own **replica** and **persona**:
 
 1. **HR Screening** - Initial screening with HR representative
 2. **Technical Round** - Technical interview with engineering lead  
@@ -43,98 +43,153 @@ You need to create **three different replicas** for the different interview roun
 3. Upload a video that represents a senior manager
 4. Note the `replica_id` for behavioral
 
-### 4. Configure Environment Variables
+### 4. Create Three Personas (AI Personalities)
+You need to create **three different personas** for the different interview rounds:
+
+#### Persona 1: HR Persona
+1. Go to **Personas** in your Tavus dashboard
+2. Click **Create New Persona**
+3. Name it "HR Interviewer Persona" or similar
+4. Configure the personality traits for HR screening:
+   - Professional and welcoming
+   - Focused on company culture fit
+   - Asks about background and motivation
+5. Note the `persona_id` for HR
+
+#### Persona 2: Technical Persona
+1. Create another persona
+2. Name it "Technical Lead Persona" or similar
+3. Configure the personality traits for technical interviews:
+   - Analytical and detail-oriented
+   - Focused on technical skills and problem-solving
+   - Asks coding and system design questions
+4. Note the `persona_id` for technical
+
+#### Persona 3: Behavioral Persona
+1. Create a third persona
+2. Name it "Hiring Manager Persona" or similar
+3. Configure the personality traits for behavioral interviews:
+   - Leadership-focused and strategic
+   - Focused on soft skills and experience
+   - Asks situational and behavioral questions
+4. Note the `persona_id` for behavioral
+
+### 5. Configure Environment Variables
 Add these to your `.env` file:
 
 ```env
 VITE_TAVUS_API_KEY=your_actual_api_key_here
+
+# Replica IDs
 VITE_TAVUS_HR_REPLICA_ID=replica_id_for_hr_interviewer
 VITE_TAVUS_TECHNICAL_REPLICA_ID=replica_id_for_technical_interviewer
 VITE_TAVUS_BEHAVIORAL_REPLICA_ID=replica_id_for_behavioral_interviewer
+
+# Persona IDs
+VITE_TAVUS_HR_PERSONA_ID=persona_id_for_hr_interviewer
+VITE_TAVUS_TECHNICAL_PERSONA_ID=persona_id_for_technical_interviewer
+VITE_TAVUS_BEHAVIORAL_PERSONA_ID=persona_id_for_behavioral_interviewer
 ```
 
 ## New Interview Modes:
 
 ### 1. Single Round Interview
 - User selects one specific interview type (technical, behavioral, etc.)
-- Uses the appropriate replica for that round
+- Uses the appropriate replica and persona for that round
 - Duration: 15-45 minutes depending on round type
 
 ### 2. Complete Interview Process
 - **Multi-round interview** with all three interviewers
 - Automatically progresses through: HR Screening → Technical → Behavioral
 - Total duration: ~90 minutes (15 + 45 + 30 minutes)
-- Each round uses a different AI interviewer
+- Each round uses a different AI interviewer with unique personality
 
 ## How the Integration Works:
 
-### 1. Single Round Flow
+### 1. API Request Format
+The integration now sends both `replica_id` and `persona_id` as required by Tavus API v2:
+
+```javascript
+fetch('https://tavusapi.com/v2/conversations', {
+  method: 'POST',
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": "<api-key>"
+  },
+  body: JSON.stringify({
+    "replica_id": "rf4703150052",
+    "persona_id": "p5c4e72f7020"
+  }),
+})
+```
+
+### 2. Single Round Flow
 1. User starts an interview session
-2. App selects appropriate replica based on interview type
-3. Creates conversation with that specific replica
+2. App selects appropriate replica and persona based on interview type
+3. Creates conversation with both IDs
 4. User interacts with the specialized AI interviewer
 
-### 2. Complete Interview Flow
+### 3. Complete Interview Flow
 1. User selects "Complete Interview" mode
 2. **Round 1**: HR Screening (15 min)
-   - Uses HR replica for initial screening questions
+   - Uses HR replica + HR persona for initial screening questions
 3. **Round 2**: Technical Interview (45 min)  
-   - Automatically switches to technical replica
+   - Automatically switches to technical replica + technical persona
    - Focuses on coding/technical questions
 4. **Round 3**: Behavioral Interview (30 min)
-   - Switches to behavioral replica
+   - Switches to behavioral replica + behavioral persona
    - Focuses on soft skills and experience
 
-### 3. Smart Replica Selection
-- **HR Replica**: Used for screening rounds and general questions
-- **Technical Replica**: Used for technical interviews and coding questions
-- **Behavioral Replica**: Used for behavioral and management-style questions
-- **Fallback**: If specific replica not available, uses first available replica
+### 4. Smart Replica + Persona Selection
+- **HR Replica + Persona**: Used for screening rounds and general questions
+- **Technical Replica + Persona**: Used for technical interviews and coding questions
+- **Behavioral Replica + Persona**: Used for behavioral and management-style questions
+- **Fallback**: If specific replica/persona not available, uses mock mode
 
 ## Features Included:
 
-### ✅ Multi-Replica Support
+### ✅ Multi-Replica + Persona Support
 - Different AI personalities for different interview types
-- Automatic replica selection based on interview round
-- Seamless transitions between rounds
+- Automatic replica and persona selection based on interview round
+- Seamless transitions between rounds with different personalities
 
 ### ✅ Interview Modes
-- **Single Round**: Practice specific interview type
-- **Complete Process**: Full multi-round interview experience
+- **Single Round**: Practice specific interview type with appropriate AI personality
+- **Complete Process**: Full multi-round interview experience with different interviewers
 - **Custom Selection**: Choose specific rounds to practice
 
 ### ✅ Progress Tracking
 - Visual progress indicator for multi-round interviews
 - Round completion tracking
-- Automatic progression between rounds
+- Automatic progression between rounds with different AI personalities
 
 ### ✅ Flexible Configuration
-- Works with 1, 2, or 3 replicas
-- Graceful fallbacks if replicas not available
+- Works with 1, 2, or 3 replica/persona pairs
+- Graceful fallbacks if replicas/personas not available
 - Mock mode for development/testing
 
 ## Setup Priority:
 
-### Minimum Setup (1 Replica):
-- Create just the **Technical Replica**
+### Minimum Setup (1 Replica + 1 Persona):
+- Create just the **Technical Replica + Technical Persona**
 - Users can do single-round technical interviews
 - Complete interview mode will be disabled
 
-### Recommended Setup (3 Replicas):
-- Create all three replicas for full experience
+### Recommended Setup (3 Replicas + 3 Personas):
+- Create all three replica/persona pairs for full experience
 - Enables both single-round and complete interview modes
-- Provides most realistic interview simulation
+- Provides most realistic interview simulation with different AI personalities
 
 ## Testing:
 
-### With Replicas:
-1. Add all three replica IDs to `.env`
+### With Replicas + Personas:
+1. Add all three replica IDs and persona IDs to `.env`
 2. Test single-round interviews with each type
 3. Test complete interview process
-4. Verify automatic round transitions
+4. Verify automatic round transitions with different AI personalities
 
-### Without Replicas (Mock Mode):
-- App automatically detects missing replicas
+### Without Replicas/Personas (Mock Mode):
+- App automatically detects missing replicas/personas
 - Shows demo interface with simulated AI interviewers
 - All functionality works except actual video/voice interaction
 
@@ -149,54 +204,18 @@ The integration is designed to be cost-effective:
 ## Next Steps:
 
 1. **Create your three replicas** on Tavus
-2. **Add replica IDs** to your `.env` file  
-3. **Test single-round interviews** first
-4. **Test complete interview process**
-5. **Customize AI prompts** for each replica type
+2. **Create your three personas** on Tavus
+3. **Add replica IDs and persona IDs** to your `.env` file  
+4. **Test single-round interviews** first
+5. **Test complete interview process**
+6. **Customize AI prompts** for each persona type
 
-The system will automatically detect which replicas you have configured and enable the appropriate interview modes!
-3. Tavus returns a conversation URL
-4. The URL is embedded in an iframe for the video call
-5. User can interact with the AI interviewer in real-time
+The system will automatically detect which replicas and personas you have configured and enable the appropriate interview modes!
 
-### 2. Features Included
-- **Real-time video conversation** with AI interviewer
-- **Voice interaction** - user speaks, AI responds
-- **Recording** - conversations can be recorded for review
-- **Transcription** - automatic speech-to-text
-- **Custom prompts** - AI can be programmed for specific interview types
+## Important Notes:
 
-### 3. Current Implementation
-- ✅ API integration ready
-- ✅ Video player component
-- ✅ Conversation management
-- ✅ Error handling and fallbacks
-- ✅ Mock mode for development
-
-## Testing Without Tavus:
-
-The app includes a **mock mode** that works without Tavus:
-- Shows a simulated AI interviewer interface
-- Allows you to test the interview flow
-- No actual video/voice interaction
-
-## Next Steps:
-
-1. **Get Tavus API key** and add to `.env`
-2. **Create a replica** for your AI interviewer
-3. **Test the integration** in a real interview session
-4. **Customize the AI prompts** for different interview types
-
-## Pricing Note:
-
-Tavus has usage-based pricing. Check their pricing page for current rates. The integration is designed to be cost-effective by:
-- Only starting conversations when needed
-- Properly ending conversations when interviews finish
-- Using efficient API calls
-
-## Support:
-
-If you need help with Tavus setup:
-1. Check Tavus documentation: https://docs.tavus.io
-2. Contact Tavus support for account issues
-3. The integration code handles most edge cases automatically
+- **Both replica_id and persona_id are required** for Tavus API v2
+- Each interview round needs its own replica + persona pair
+- The persona defines the AI's personality and interview style
+- The replica defines the AI's appearance and voice
+- Make sure both are in "ready" status before testing
