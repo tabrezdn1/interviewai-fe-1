@@ -184,8 +184,8 @@ const Navbar: React.FC = () => {
           <div className="container-custom mx-auto flex flex-col space-y-3">
             {user ? (
               <>
-                <MobileNavLink to="/dashboard" label="Dashboard" onClick={closeMenu} />
-                <MobileNavLink to="/setup" label="New Interview" onClick={closeMenu} />
+                <MobileNavLink to="/dashboard\" label=\"Dashboard\" onClick={closeMenu} />
+                <MobileNavLink to="/setup\" label=\"New Interview\" onClick={closeMenu} />
                 <div className="pt-3 border-t border-gray-200">
                   <div className="flex items-center gap-3 mb-4">
                     <Avatar className="h-8 w-8">
