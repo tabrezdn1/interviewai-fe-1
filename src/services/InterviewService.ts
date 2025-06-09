@@ -130,7 +130,7 @@ export async function getInterview(id: string) {
     // Return mock interview for testing
     return {
       id,
-      title: 'Frontend Developer Interview',
+      title: 'Mock Frontend Developer Interview',
       company: 'Tech Solutions Inc.',
       interviewer: {
         name: 'Alex Chen',

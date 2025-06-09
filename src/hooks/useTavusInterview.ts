@@ -28,6 +28,14 @@ export const useTavusInterview = (options: UseTavusInterviewOptions = {}): UseTa
   // Load available replicas on mount
   useEffect(() => {
     const loadReplicas = async () => {
+      // Check if Tavus API key is configured
+      const apiKey = import.meta.env.VITE_TAVUS_API_KEY;
+      if (!apiKey || apiKey === 'your_tavus_api_key_here') {
+        console.warn('Tavus API key not configured. AI interviews will not be available.');
+        setError('AI interviews are not configured. Please contact support.');
+        return;
+      }
+
       try {
         const tavusAPI = getTavusAPI();
         const replicaList = await tavusAPI.getReplicas();
