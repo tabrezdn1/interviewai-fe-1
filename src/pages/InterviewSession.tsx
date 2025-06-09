@@ -55,19 +55,18 @@ const InterviewSession: React.FC = () => {
   const [hasRequestedPermissions, setHasRequestedPermissions] = useState(false);
   
   // Tavus integration
-  const tavusVideoMeeting = useTavusVideoMeeting({
+  const {
+    conversationUrl,
+    connectionStatus,
+    isLoading: videoLoading,
+    error: videoError,
+    isConversationActive
+  } = useTavusVideoMeeting({
     interviewType: interviewData?.interview_types?.type || 'technical',
     participantName: 'AI Interviewer',
     role: interviewData?.role,
     company: interviewData?.company || undefined
   });
-
-  const {
-    conversationUrl,
-    connectionStatus,
-    isLoading: videoLoading,
-    error: videoError
-  } = tavusVideoMeeting;
   
   // Media access for user video/audio
   const {
