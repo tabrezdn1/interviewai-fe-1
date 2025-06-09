@@ -16,6 +16,7 @@ import { useAuth } from '../hooks/useAuth';
 const LandingPage: React.FC = () => {
   const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
+  const [isAnnual, setIsAnnual] = useState(false);
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
@@ -328,14 +329,38 @@ const LandingPage: React.FC = () => {
 
           {/* Billing Toggle */}
           <div className="flex justify-center mb-12">
-            <div className="bg-muted p-1 rounded-lg">
-              <div className="flex">
-                <button className="px-4 py-2 rounded-md bg-background text-foreground font-medium text-sm">
+            <div className="bg-muted p-1 rounded-lg inline-flex">
+              <div className="flex relative">
+                <button 
+                  onClick={() => setIsAnnual(false)}
+                  className={cn(
+                    "px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 relative z-10",
+                    !isAnnual 
+                      ? "text-foreground" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
                   Monthly
                 </button>
-                <button className="px-4 py-2 rounded-md text-muted-foreground font-medium text-sm">
+                <button 
+                  onClick={() => setIsAnnual(true)}
+                  className={cn(
+                    "px-4 py-2 rounded-md font-medium text-sm transition-all duration-200 relative z-10",
+                    isAnnual 
+                      ? "text-foreground" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
                   Annual <span className="text-green-600 text-xs ml-1">Save 20%</span>
                 </button>
+                
+                {/* Sliding background */}
+                <div 
+                  className={cn(
+                    "absolute top-1 bottom-1 bg-background rounded-md shadow-sm transition-all duration-200 ease-out",
+                    isAnnual ? "left-[50%] right-1" : "left-1 right-[50%]"
+                  )}
+                />
               </div>
             </div>
           </div>
@@ -345,9 +370,9 @@ const LandingPage: React.FC = () => {
             <PricingCard
               title="Intro"
               subtitle="Perfect for getting started"
-              price="$49"
-              period="per month"
-              annualPrice="$499"
+              price={isAnnual ? "$499" : "$49"}
+              period={isAnnual ? "per year" : "per month"}
+              originalPrice={isAnnual ? "$588" : undefined}
               features={[
                 "5 AI interview sessions",
                 "Basic feedback analysis",
@@ -356,6 +381,7 @@ const LandingPage: React.FC = () => {
                 "Progress tracking"
               ]}
               buttonText="Start Free Trial"
+              isAnnual={isAnnual}
               delay={0}
             />
 
@@ -363,9 +389,9 @@ const LandingPage: React.FC = () => {
             <PricingCard
               title="Professional"
               subtitle="Most popular for job seekers"
-              price="$59"
-              period="per month"
-              annualPrice="$549"
+              price={isAnnual ? "$549" : "$59"}
+              period={isAnnual ? "per year" : "per month"}
+              originalPrice={isAnnual ? "$708" : undefined}
               features={[
                 "20 AI interview sessions",
                 "Advanced feedback & coaching",
@@ -376,6 +402,7 @@ const LandingPage: React.FC = () => {
               ]}
               buttonText="Get Started"
               popular={true}
+              isAnnual={isAnnual}
               delay={0.1}
             />
 
@@ -383,9 +410,9 @@ const LandingPage: React.FC = () => {
             <PricingCard
               title="Executive"
               subtitle="For senior-level positions"
-              price="$69"
-              period="per month"
-              annualPrice="$599"
+              price={isAnnual ? "$599" : "$69"}
+              period={isAnnual ? "per year" : "per month"}
+              originalPrice={isAnnual ? "$828" : undefined}
               features={[
                 "50 AI interview sessions",
                 "Executive-level scenarios",
@@ -396,6 +423,7 @@ const LandingPage: React.FC = () => {
                 "Leadership assessments"
               ]}
               buttonText="Contact Sales"
+              isAnnual={isAnnual}
               delay={0.2}
             />
           </div>
@@ -707,10 +735,11 @@ interface PricingCardProps {
   subtitle: string;
   price: string;
   period: string;
-  annualPrice: string;
+  originalPrice?: string;
   features: string[];
   buttonText: string;
   popular?: boolean;
+  isAnnual: boolean;
   delay: number;
 }
 
@@ -719,10 +748,11 @@ const PricingCard: React.FC<PricingCardProps> = ({
   subtitle, 
   price, 
   period, 
-  annualPrice, 
+  originalPrice,
   features, 
   buttonText, 
   popular = false, 
+  isAnnual,
   delay 
 }) => {
   return (
@@ -750,9 +780,21 @@ const PricingCard: React.FC<PricingCardProps> = ({
           <span className="text-4xl font-bold">{price}</span>
           <span className="text-muted-foreground ml-1">{period}</span>
         </div>
-        <p className="text-sm text-muted-foreground">
-          or {annualPrice} annually
-        </p>
+        {originalPrice && isAnnual && (
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-sm text-muted-foreground line-through">
+              {originalPrice}
+            </span>
+            <span className="text-sm text-green-600 font-medium">
+              Save 20%
+            </span>
+          </div>
+        )}
+        {!isAnnual && (
+          <p className="text-sm text-muted-foreground">
+            Billed monthly
+          </p>
+        )}
       </div>
       
       <ul className="space-y-3 mb-8">
