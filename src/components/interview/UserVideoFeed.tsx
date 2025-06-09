@@ -32,6 +32,7 @@ const UserVideoFeed: React.FC<UserVideoFeedProps> = ({
     return () => {
       if (videoRef.current) {
         console.log('Cleaning up video stream');
+        videoRef.current.pause(); // Stop playback before removing media
         videoRef.current.srcObject = null;
       }
     };
