@@ -5,7 +5,7 @@ import { mockQuestions } from '../data/questions';
 import { mockFeedback } from '../data/feedback';
 
 export interface InterviewFormData {
-  type: string;
+  interviewType: string;
   role: string;
   company?: string;
   experience: string;
@@ -41,7 +41,7 @@ export async function createInterview(userId: string, formData: InterviewFormDat
     const { data: interviewTypeData, error: typeError } = await supabase
       .from('interview_types')
       .select('id')
-      .eq('type', formData.type)
+      .eq('type', formData.interviewType)
       .single();
     
     if (typeError) throw typeError;
