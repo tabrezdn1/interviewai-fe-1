@@ -24,6 +24,8 @@ export interface TavusConversationConfig {
 export interface TavusConnectionStatus {
   status: 'connecting' | 'connected' | 'disconnected' | 'failed' | 'reconnecting';
   quality: 'poor' | 'fair' | 'good' | 'excellent';
+  camera: boolean;
+  microphone: boolean;
   latency?: number;
   error?: string;
 }
@@ -31,7 +33,12 @@ export interface TavusConnectionStatus {
 class TavusService {
   private conversationId: string | null = null;
   private joinLink: string | null = null;
-  private connectionStatus: TavusConnectionStatus = { status: 'disconnected', quality: 'good' };
+  private connectionStatus: TavusConnectionStatus = { 
+    status: 'disconnected', 
+    quality: 'good',
+    camera: false,
+    microphone: false
+  };
   private statusCallbacks: ((status: TavusConnectionStatus) => void)[] = [];
 
   /**
@@ -131,7 +138,11 @@ class TavusService {
       
       this.conversationId = null;
       this.joinLink = null;
-      this.updateConnectionStatus({ status: 'disconnected' });
+      this.updateConnectionStatus({ 
+        status: 'disconnected',
+        camera: false,
+        microphone: false
+      });
       
       console.log('Conversation ended successfully');
     } catch (error) {
@@ -193,7 +204,15 @@ class TavusService {
       // Stop the stream immediately after checking
       stream.getTracks().forEach(track => track.stop());
       
-      return { camera: true, microphone: true };
+      const permissions = { camera: true, microphone: true };
+      
+      // Update connection status with device permissions
+      this.updateConnectionStatus({
+        camera: permissions.camera,
+        microphone: permissions.microphone
+      });
+      
+      return permissions;
     } catch (error) {
       console.error('Device permission check failed:', error);
       
@@ -208,11 +227,19 @@ class TavusService {
         }
       }
       
-      return { 
+      const permissions = { 
         camera: false, 
         microphone: false, 
         error: errorMessage 
       };
+      
+      // Update connection status with failed permissions
+      this.updateConnectionStatus({
+        camera: permissions.camera,
+        microphone: permissions.microphone
+      });
+      
+      return permissions;
     }
   }
 

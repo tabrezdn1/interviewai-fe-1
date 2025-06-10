@@ -7,7 +7,7 @@ import {
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
-import { useDailyVideoCall } from '../../hooks/useDailyVideoCall';
+import { useTavusVideoMeeting } from '../../hooks/useTavusVideoMeeting';
 
 interface VideoInterviewSetupProps {
   interviewType: string;
@@ -40,8 +40,8 @@ const VideoInterviewSetup: React.FC<VideoInterviewSetupProps> = ({
     isConnected,
     isLoading,
     error,
-    startCall
-  } = useDailyVideoCall({
+    startConversation
+  } = useTavusVideoMeeting({
     interviewType,
     participantName,
     role,
@@ -134,9 +134,10 @@ const VideoInterviewSetup: React.FC<VideoInterviewSetupProps> = ({
 
   const handleStartInterview = async () => {
     try {
-      await startCall();
+      await startConversation();
     } catch (error) {
       console.error('Failed to start interview:', error);
+      onError('Failed to start video call');
     }
   };
 

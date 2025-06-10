@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { DailyProvider } from '@daily-co/daily-react';
-import { useDailyVideoCall } from '../hooks/useDailyVideoCall';
+import { useTavusVideoMeeting } from '../hooks/useTavusVideoMeeting';
 import { 
   Clock, X, AlertCircle, PauseCircle, PlayCircle, Settings, ChevronLeft
 } from 'lucide-react';
@@ -54,22 +53,21 @@ const InterviewSessionContent: React.FC = () => {
   const [showSettings, setShowSettings] = useState(false);
   const [showEndCallConfirm, setShowEndCallConfirm] = useState(false);
   
-  // Daily video call integration
+  // Tavus video call integration
   const {
     conversationUrl,
     isLoading: videoLoading,
     error: videoError,
     isConnected,
-    endCall,
-    dailyCall
-  } = useDailyVideoCall({
+    endConversation
+  } = useTavusVideoMeeting({
     interviewType: interviewData?.interview_types?.type || 'technical',
-    participantName: 'AI Interviewer',
-    role: interviewData?.role,
+    participantName: 'Candidate',
+    role: interviewData?.role || 'Software Engineer',
     company: interviewData?.company || undefined
   });
 
-  // Use isConnected from Daily call
+  // Use isConnected from Tavus
   const isConversationActive = isConnected;
   
   // Media access for user video/audio
@@ -223,7 +221,7 @@ const InterviewSessionContent: React.FC = () => {
           <h1 className="text-3xl font-bold mb-6">Interview Setup</h1>
           <VideoInterviewSetup
             interviewType={interviewData.interview_types?.type || 'technical'}
-            participantName="AI Interviewer"
+            participantName="Candidate"
             role={interviewData.role}
             company={interviewData.company || undefined}
             onSetupComplete={handleVideoSetupComplete}
@@ -301,7 +299,7 @@ const InterviewSessionContent: React.FC = () => {
         <div className="h-full p-4">
           <TavusVideoMeeting
             conversationUrl={conversationUrl || ''}
-            participantName="AI Interviewer"
+            participantName="Candidate"
             onMeetingEnd={handleEndCallRequest}
             onError={handleVideoError}
             className="w-full h-[calc(100vh-6rem)]"
@@ -391,13 +389,9 @@ const InterviewSessionContent: React.FC = () => {
   );
 };
 
-// Main component wrapped with DailyProvider
+// Main component - no longer needs DailyProvider
 const InterviewSession: React.FC = () => {
-  return (
-    <DailyProvider>
-      <InterviewSessionContent />
-    </DailyProvider>
-  );
+  return <InterviewSessionContent />;
 };
 
 export default InterviewSession;
