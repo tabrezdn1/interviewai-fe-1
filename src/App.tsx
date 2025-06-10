@@ -5,7 +5,7 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute'
 import { Navbar } from './components/layout/Navbar'
 import { LandingPage } from './pages/LandingPage'
 import { Login } from './pages/Login'
-import { Dashboard } from './pages/Dashboard'
+import Dashboard from './pages/Dashboard'
 import { InterviewSetup } from './pages/InterviewSetup'
 import { InterviewSession } from './pages/InterviewSession'
 import { FeedbackAnalysis } from './pages/FeedbackAnalysis'
@@ -73,7 +73,7 @@ function App() {
               } 
             />
             <Route path="/404" element={<NotFound />} />
-            <Route path="*" element={<Navigate to="/404\" replace />} />
+            <Route path="*" element={<Navigate to="/404" replace />} />
           </Routes>
         </div>
       </Router>
