@@ -5,7 +5,7 @@ import {
   Code, Briefcase, User, Clock, Check, ChevronRight, ChevronLeft, 
   MessageSquare, Users, Phone, Plus, Trash2, Info, Lightbulb, 
   CheckCircle, ArrowRight, Smartphone, Laptop, Building, Sparkles,
-  Calendar, CalendarDays
+  Calendar, CalendarDays, Save
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
@@ -55,6 +55,7 @@ const InterviewSetup: React.FC = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [interviewTypes, setInterviewTypes] = useState<InterviewType[]>([]);
   const [experienceLevels, setExperienceLevels] = useState<LevelOption[]>([]);
   const [difficultyLevels, setDifficultyLevels] = useState<LevelOption[]>([]);
@@ -167,6 +168,22 @@ const InterviewSetup: React.FC = () => {
       } finally {
         setSubmitting(false);
       }
+    }
+  };
+
+  const handleSaveAndSchedule = async () => {
+    setSaving(true);
+    try {
+      if (user) {
+        await createInterview(user.id, formData);
+        // Redirect to dashboard after saving
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Error saving interview:', error);
+      // Handle error - show message to user
+    } finally {
+      setSaving(false);
     }
   };
   
@@ -559,9 +576,9 @@ const InterviewSetup: React.FC = () => {
                           <div className="flex items-start gap-2">
                             <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                             <div>
-                              <p className="text-sm font-medium text-green-800">Ready to Start</p>
+                              <p className="text-sm font-medium text-green-800">Ready to Schedule</p>
                               <p className="text-xs text-green-700 mt-1">
-                                Your interview is configured and ready. Click "Start Interview" to begin your AI-powered practice session.
+                                Your interview is configured and ready. You can save it for later or start immediately.
                               </p>
                             </div>
                           </div>
@@ -585,20 +602,51 @@ const InterviewSetup: React.FC = () => {
                       <div></div>
                     )}
                     
-                    <Button
-                      onClick={handleNext}
-                      disabled={!isStepValid() || submitting}
-                      className={`flex items-center gap-2 ${
-                        !isStepValid() || submitting ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                      variant="interview"
-                    >
-                      {submitting && (
-                        <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                      )}
-                      {step < 4 ? 'Continue' : 'Start Interview'}
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                    {step < 4 ? (
+                      <Button
+                        onClick={handleNext}
+                        disabled={!isStepValid()}
+                        className={`flex items-center gap-2 ${
+                          !isStepValid() ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                        variant="interview"
+                      >
+                        Continue
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <div className="flex gap-3">
+                        <Button
+                          onClick={handleSaveAndSchedule}
+                          disabled={!isStepValid() || saving || submitting}
+                          variant="outline"
+                          className={`flex items-center gap-2 ${
+                            !isStepValid() || saving || submitting ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                        >
+                          {saving && (
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                          )}
+                          <Save className="h-4 w-4" />
+                          {saving ? 'Saving...' : 'Save & Schedule'}
+                        </Button>
+                        
+                        <Button
+                          onClick={handleNext}
+                          disabled={!isStepValid() || submitting || saving}
+                          className={`flex items-center gap-2 ${
+                            !isStepValid() || submitting || saving ? 'opacity-50 cursor-not-allowed' : ''
+                          }`}
+                          variant="interview"
+                        >
+                          {submitting && (
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                          )}
+                          {submitting ? 'Starting...' : 'Start Now'}
+                          <ArrowRight className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
