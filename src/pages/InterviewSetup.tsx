@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { 
   Code, Briefcase, User, Clock, Check, ChevronRight, ChevronLeft, 
   MessageSquare, Users, Phone, Plus, Trash2, Info, Lightbulb, 
-  CheckCircle, ArrowRight, Smartphone, Laptop, Building, Sparkles
+  CheckCircle, ArrowRight, Smartphone, Laptop, Building, Sparkles,
+  Calendar, CalendarDays
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
@@ -38,6 +39,7 @@ interface InterviewMode {
   icon: React.ReactNode;
   rounds: string[];
   duration: number;
+  maxRounds?: number;
 }
 
 interface InterviewRound {
@@ -67,6 +69,9 @@ interface InterviewFormData {
   interviewMode?: string;
   selectedRounds?: string[];
   roundDurations?: Record<string, number>;
+  scheduledDate: string;
+  scheduledTime: string;
+  technicalRounds?: number;
 }
 
 const InterviewSetup: React.FC = () => {
@@ -83,6 +88,12 @@ const InterviewSetup: React.FC = () => {
   const [customRounds, setCustomRounds] = useState<InterviewRound[]>([]);
   const [jobSuggestions, setJobSuggestions] = useState<JobSuggestion[]>([]);
   
+  // Set default date to tomorrow and time to 2 PM
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const defaultDate = tomorrow.toISOString().split('T')[0];
+  const defaultTime = '14:00';
+  
   const [formData, setFormData] = useState<InterviewFormData>({
     interviewType: '',
     role: '',
@@ -92,7 +103,10 @@ const InterviewSetup: React.FC = () => {
     duration: 20,
     interviewMode: '',
     selectedRounds: [],
-    roundDurations: {}
+    roundDurations: {},
+    scheduledDate: defaultDate,
+    scheduledTime: defaultTime,
+    technicalRounds: 1
   });
 
   // Generate job suggestions based on popular roles
@@ -172,15 +186,25 @@ const InterviewSetup: React.FC = () => {
     }));
   };
 
+  const handleTechnicalRoundsChange = (increment: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      technicalRounds: increment 
+        ? Math.min((prev.technicalRounds || 1) + 1, 5)
+        : Math.max((prev.technicalRounds || 1) - 1, 1)
+    }));
+  };
+
   const isStepValid = () => {
     if (step === 1) return !!formData.interviewMode;
     if (step === 2) return !!formData.interviewType;
     if (step === 3) return !!formData.role;
+    if (step === 4) return !!formData.scheduledDate && !!formData.scheduledTime && !!formData.difficulty;
     return true;
   };
 
   const handleNext = async () => {
-    if (step < 4) {
+    if (step < 5) {
       setStep(step + 1);
     } else {
       // Submit and navigate to interview
@@ -255,10 +279,11 @@ const InterviewSetup: React.FC = () => {
           modes.push({
             id: 'complete',
             name: 'Complete Interview',
-            description: 'Full interview process with all rounds',
+            description: 'Full interview process with multiple rounds',
             icon: <Users className="h-6 w-6" />,
             rounds: rounds.map(r => r.id),
-            duration: rounds.reduce((total, round) => total + round.duration, 0)
+            duration: rounds.reduce((total, round) => total + round.duration, 0),
+            maxRounds: 5
           });
         }
         
@@ -313,50 +338,27 @@ const InterviewSetup: React.FC = () => {
                   {/* Progress indicator */}
                   <div className="mb-8">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          step >= 1 ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'
-                        }`}>
-                          {step > 1 ? <Check className="h-5 w-5" /> : 1}
+                      {[1, 2, 3, 4, 5].map((stepNumber) => (
+                        <div key={stepNumber} className="flex items-center">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            step >= stepNumber ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            {step > stepNumber ? <Check className="h-5 w-5" /> : stepNumber}
+                          </div>
+                          {stepNumber < 5 && (
+                            <div className={`h-1 w-12 ${
+                              step > stepNumber ? 'bg-primary-600' : 'bg-gray-200'
+                            }`}></div>
+                          )}
                         </div>
-                        <div className={`h-1 w-12 ${
-                          step > 1 ? 'bg-primary-600' : 'bg-gray-200'
-                        }`}></div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          step >= 2 ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'
-                        }`}>
-                          {step > 2 ? <Check className="h-5 w-5" /> : 2}
-                        </div>
-                        <div className={`h-1 w-12 ${
-                          step > 2 ? 'bg-primary-600' : 'bg-gray-200'
-                        }`}></div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          step >= 3 ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'
-                        }`}>
-                          {step > 3 ? <Check className="h-5 w-5" /> : 3}
-                        </div>
-                        <div className={`h-1 w-12 ${
-                          step > 3 ? 'bg-primary-600' : 'bg-gray-200'
-                        }`}></div>
-                      </div>
-                      
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        step >= 4 ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        4
-                      </div>
+                      ))}
                     </div>
                     <div className="flex justify-between mt-2 text-sm text-gray-600">
-                      <span>Interview Mode</span>
-                      <span>Interview Type</span>
-                      <span>Job Details</span>
-                      <span>Settings</span>
+                      <span>Mode</span>
+                      <span>Type</span>
+                      <span>Details</span>
+                      <span>Schedule</span>
+                      <span>Review</span>
                     </div>
                   </div>
                   
@@ -395,9 +397,18 @@ const InterviewSetup: React.FC = () => {
                                 <span className="text-gray-600">({round.duration} min)</span>
                               </div>
                             ))}
+                            {formData.interviewMode === 'complete' && formData.interviewType === 'technical' && (
+                              <div className="flex items-center gap-3 text-sm">
+                                <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-medium">
+                                  +
+                                </div>
+                                <span className="font-medium">Additional Technical Rounds</span>
+                                <span className="text-gray-600">(configurable)</span>
+                              </div>
+                            )}
                           </div>
                           <div className="mt-3 text-sm text-blue-700">
-                            Total duration: {availableRounds.reduce((total, round) => total + round.duration, 0)} minutes
+                            Total duration: {availableRounds.reduce((total, round) => total + round.duration, 0)}+ minutes
                           </div>
                         </div>
                       )}
@@ -427,6 +438,42 @@ const InterviewSetup: React.FC = () => {
                           />
                         ))}
                       </div>
+
+                      {/* Technical Rounds Configuration for Complete Mode */}
+                      {formData.interviewMode === 'complete' && formData.interviewType === 'technical' && (
+                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                          <h3 className="font-medium text-purple-900 mb-3">Technical Rounds Configuration</h3>
+                          <div className="flex items-center gap-4">
+                            <span className="text-sm text-purple-700">Number of technical rounds:</span>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleTechnicalRoundsChange(false)}
+                                disabled={formData.technicalRounds === 1}
+                                className="w-8 h-8 p-0"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                              <span className="w-8 text-center font-medium">{formData.technicalRounds}</span>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleTechnicalRoundsChange(true)}
+                                disabled={formData.technicalRounds === 5}
+                                className="w-8 h-8 p-0"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <p className="text-xs text-purple-600 mt-2">
+                            Each round will focus on different technical aspects (coding, system design, architecture, etc.)
+                          </p>
+                        </div>
+                      )}
                     </motion.div>
                   )}
                   
@@ -520,7 +567,7 @@ const InterviewSetup: React.FC = () => {
                     </motion.div>
                   )}
                   
-                  {/* Step 4: Settings */}
+                  {/* Step 4: Schedule & Settings */}
                   {step === 4 && (
                     <motion.div
                       initial={{ opacity: 0 }}
@@ -528,9 +575,63 @@ const InterviewSetup: React.FC = () => {
                       exit={{ opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <h2 className="text-xl font-semibold mb-6">Interview Settings</h2>
+                      <h2 className="text-xl font-semibold mb-6">Schedule & Settings</h2>
                       
                       <div className="space-y-6">
+                        {/* Schedule Section */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-4">
+                            <Calendar className="h-5 w-5 text-blue-600" />
+                            <h3 className="font-medium text-blue-900">Interview Schedule</h3>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label htmlFor="scheduledDate" className="block text-sm font-medium text-gray-700 mb-1">
+                                Date
+                              </label>
+                              <input
+                                type="date"
+                                id="scheduledDate"
+                                name="scheduledDate"
+                                value={formData.scheduledDate}
+                                onChange={handleInputChange}
+                                min={new Date().toISOString().split('T')[0]}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <label htmlFor="scheduledTime" className="block text-sm font-medium text-gray-700 mb-1">
+                                Time
+                              </label>
+                              <input
+                                type="time"
+                                id="scheduledTime"
+                                name="scheduledTime"
+                                value={formData.scheduledTime}
+                                onChange={handleInputChange}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                required
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="mt-3 text-sm text-blue-700">
+                            <CalendarDays className="h-4 w-4 inline mr-1" />
+                            Scheduled for {new Date(`${formData.scheduledDate}T${formData.scheduledTime}`).toLocaleDateString('en-US', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Settings Section */}
                         <div>
                           <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700 mb-1">
                             Difficulty Level
@@ -557,6 +658,9 @@ const InterviewSetup: React.FC = () => {
                               <span className="text-lg font-medium">{formData.duration} minutes</span>
                               <p className="text-sm text-gray-600 mt-1">
                                 Duration is automatically calculated based on selected rounds
+                                {formData.technicalRounds && formData.technicalRounds > 1 && 
+                                  ` (includes ${formData.technicalRounds} technical rounds)`
+                                }
                               </p>
                             </div>
                           ) : (
@@ -575,41 +679,89 @@ const InterviewSetup: React.FC = () => {
                             </div>
                           )}
                         </div>
-                        
-                        <div className="bg-gray-50 p-4 rounded-lg mt-6">
-                          <h3 className="font-medium mb-2">Interview Summary</h3>
-                          <ul className="space-y-2 text-sm text-gray-600">
-                            <li className="flex justify-between">
-                              <span>Mode:</span>
-                              <span className="font-medium text-gray-900">{formData.interviewMode === 'complete' ? 'Complete Interview' : 'Single Round'}</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <span>Type:</span>
+                      </div>
+                    </motion.div>
+                  )}
+                  
+                  {/* Step 5: Review */}
+                  {step === 5 && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <h2 className="text-xl font-semibold mb-6">Review & Confirm</h2>
+                      
+                      <div className="bg-gray-50 p-6 rounded-lg">
+                        <h3 className="font-medium mb-4">Interview Summary</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                          <div className="space-y-3">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Mode:</span>
+                              <span className="font-medium text-gray-900 capitalize">
+                                {formData.interviewMode === 'complete' ? 'Complete Interview' : 'Single Round'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Type:</span>
                               <span className="font-medium text-gray-900 capitalize">{formData.interviewType}</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <span>Role:</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Role:</span>
                               <span className="font-medium text-gray-900">{formData.role || 'Not specified'}</span>
-                            </li>
+                            </div>
                             {formData.company && (
-                              <li className="flex justify-between">
-                                <span>Company:</span>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Company:</span>
                                 <span className="font-medium text-gray-900">{formData.company}</span>
-                              </li>
+                              </div>
                             )}
-                            <li className="flex justify-between">
-                              <span>Experience Level:</span>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Experience:</span>
                               <span className="font-medium text-gray-900 capitalize">{formData.experience || 'Not specified'}</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <span>Difficulty:</span>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Difficulty:</span>
                               <span className="font-medium text-gray-900 capitalize">{formData.difficulty}</span>
-                            </li>
-                            <li className="flex justify-between">
-                              <span>Duration:</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Duration:</span>
                               <span className="font-medium text-gray-900">{formData.duration} minutes</span>
-                            </li>
-                          </ul>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Scheduled:</span>
+                              <span className="font-medium text-gray-900">
+                                {new Date(`${formData.scheduledDate}T${formData.scheduledTime}`).toLocaleDateString('en-US', { 
+                                  month: 'short', 
+                                  day: 'numeric',
+                                  hour: 'numeric',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                            </div>
+                            {formData.technicalRounds && formData.technicalRounds > 1 && (
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">Technical Rounds:</span>
+                                <span className="font-medium text-gray-900">{formData.technicalRounds}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium text-green-800">Ready to Start</p>
+                              <p className="text-xs text-green-700 mt-1">
+                                Your interview is configured and ready. Click "Start Interview" to begin your AI-powered practice session.
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -641,7 +793,7 @@ const InterviewSetup: React.FC = () => {
                       {submitting && (
                         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                       )}
-                      {step < 4 ? 'Continue' : 'Start Interview'}
+                      {step < 5 ? 'Continue' : 'Start Interview'}
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
