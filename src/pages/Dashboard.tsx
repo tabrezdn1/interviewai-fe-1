@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { formatDate, formatTime } from '../lib/utils';
 import { getInterviews, deleteInterview, cancelInterview } from '../services/InterviewService';
 import { interviewTips } from '../data/feedback';
+import { mockInterviews } from '../data/interviews';
 
 interface Interview {
   id: string;
@@ -54,12 +55,19 @@ const Dashboard: React.FC = () => {
       if (user) {
         try {
           const data = await getInterviews(user.id);
-          setInterviews(data);
+          // If no interviews returned from database, use mock data for demo
+          setInterviews(data.length > 0 ? data : mockInterviews);
         } catch (error) {
           console.error('Failed to fetch interviews:', error);
+          // Use mock data as fallback
+          setInterviews(mockInterviews);
         } finally {
           setLoading(false);
         }
+      } else {
+        // If no user, still show mock data for demo purposes
+        setInterviews(mockInterviews);
+        setLoading(false);
       }
     };
     
@@ -176,7 +184,7 @@ const Dashboard: React.FC = () => {
               <div>
                 <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
                 <p className="text-gray-600">
-                  Welcome back, {user?.name}! Manage your interview practice sessions.
+                  Welcome back, {user?.name || 'Guest'}! Manage your interview practice sessions.
                 </p>
               </div>
             </div>

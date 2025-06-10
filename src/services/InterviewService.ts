@@ -15,7 +15,25 @@ export interface InterviewFormData {
   selectedRounds?: string[];
 }
 
+// Helper function to check if Supabase is properly configured
+function isSupabaseConfigured(): boolean {
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  
+  return !!(url && 
+           key && 
+           url !== 'your-supabase-url' && 
+           url.startsWith('http') &&
+           key !== 'your-supabase-anon-key');
+}
+
 export async function createInterview(userId: string, formData: InterviewFormData) {
+  // Check if Supabase is configured before making requests
+  if (!isSupabaseConfigured()) {
+    console.warn('Supabase not configured, cannot create interview');
+    throw new Error('Database not configured');
+  }
+
   try {
     // Get the IDs for the selected types
     const { data: interviewTypeData, error: typeError } = await supabase
@@ -96,10 +114,13 @@ export async function createInterview(userId: string, formData: InterviewFormDat
 export async function getInterviews(userId: string) {
   try {
     const interviews = await fetchUserInterviews(userId);
-    return interviews.length ? interviews : mockInterviews;
+    // Always return the interviews array, even if empty
+    // The mock data fallback is handled in the Dashboard component
+    return interviews;
   } catch (error) {
     console.error('Error fetching interviews:', error);
-    return mockInterviews; // Fallback to mock data
+    // Return empty array instead of mock data to let Dashboard handle fallback
+    return [];
   }
 }
 
@@ -111,6 +132,29 @@ export async function getInterview(id: string) {
     if (!uuidRegex.test(id)) {
       console.warn(`Invalid UUID format: ${id}, using mock data`);
       // Return mock interview for invalid UUIDs (like "3")
+      return {
+        id,
+        title: 'Mock Frontend Developer Interview',
+        company: 'Tech Solutions Inc.',
+        role: 'Frontend Developer',
+        interview_types: {
+          type: 'technical',
+          title: 'Technical',
+          description: 'Technical interview questions',
+          icon: 'Code'
+        },
+        difficulty_levels: {
+          value: 'medium',
+          label: 'Medium - Standard interview difficulty'
+        },
+        questions: mockQuestions.technical,
+        duration: 20
+      };
+    }
+
+    // Check if Supabase is configured before making requests
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured, using mock data');
       return {
         id,
         title: 'Mock Frontend Developer Interview',
@@ -187,6 +231,12 @@ export async function completeInterview(id: string, responses: any) {
       return true; // Return success for mock interviews
     }
 
+    // Check if Supabase is configured before making requests
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured, skipping database update');
+      return true; // Return success for mock interviews
+    }
+
     // Update interview status to completed
     const { error: updateError } = await supabase
       .from('interviews')
@@ -254,6 +304,12 @@ export async function getFeedback(interviewId: string) {
     
     if (!uuidRegex.test(interviewId)) {
       console.warn(`Invalid UUID format: ${interviewId}, using mock data`);
+      return mockFeedback;
+    }
+
+    // Check if Supabase is configured before making requests
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured, using mock data');
       return mockFeedback;
     }
 
@@ -326,6 +382,12 @@ export async function cancelInterview(id: string) {
       return true; // Return success for mock interviews
     }
 
+    // Check if Supabase is configured before making requests
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured, skipping database update');
+      return true; // Return success for mock interviews
+    }
+
     const { error } = await supabase
       .from('interviews')
       .update({ status: 'canceled' })
@@ -346,6 +408,12 @@ export async function deleteInterview(id: string) {
     
     if (!uuidRegex.test(id)) {
       console.warn(`Invalid UUID format for deletion: ${id}, skipping database update`);
+      return true; // Return success for mock interviews
+    }
+
+    // Check if Supabase is configured before making requests
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured, skipping database update');
       return true; // Return success for mock interviews
     }
 
@@ -375,6 +443,12 @@ export async function updateInterview(id: string, updates: Partial<{
     
     if (!uuidRegex.test(id)) {
       console.warn(`Invalid UUID format for update: ${id}, skipping database update`);
+      return true; // Return success for mock interviews
+    }
+
+    // Check if Supabase is configured before making requests
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase not configured, skipping database update');
       return true; // Return success for mock interviews
     }
 

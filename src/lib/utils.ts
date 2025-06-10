@@ -77,8 +77,45 @@ export function isValidUUID(uuid: string): boolean {
   return uuidRegex.test(uuid);
 }
 
+// Helper function to check if Supabase is properly configured
+function isSupabaseConfigured(): boolean {
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  
+  return !!(url && 
+           key && 
+           url !== 'your-supabase-url' && 
+           url.startsWith('http') &&
+           key !== 'your-supabase-anon-key');
+}
+
 // Supabase utility functions
 export async function fetchInterviewTypes() {
+  // Check if Supabase is configured before making requests
+  if (!isSupabaseConfigured()) {
+    console.warn('Supabase not configured, using fallback data');
+    return [
+      {
+        type: "technical",
+        title: "Technical",
+        description: "Coding, system design, and technical knowledge questions",
+        icon: "Code",
+      },
+      {
+        type: "behavioral", 
+        title: "Behavioral",
+        description: "Questions about your past experiences and situations",
+        icon: "User",
+      },
+      {
+        type: "mixed",
+        title: "Mixed",
+        description: "Combination of technical and behavioral questions",
+        icon: "Briefcase",
+      },
+    ];
+  }
+
   try {
     const { data, error } = await supabase
       .from('interview_types')
@@ -113,6 +150,16 @@ export async function fetchInterviewTypes() {
 }
 
 export async function fetchExperienceLevels() {
+  // Check if Supabase is configured before making requests
+  if (!isSupabaseConfigured()) {
+    console.warn('Supabase not configured, using fallback data');
+    return [
+      { value: "entry", label: "Entry Level (0-2 years)" },
+      { value: "mid", label: "Mid Level (3-5 years)" },
+      { value: "senior", label: "Senior Level (6+ years)" },
+    ];
+  }
+
   try {
     const { data, error } = await supabase
       .from('experience_levels')
@@ -132,6 +179,16 @@ export async function fetchExperienceLevels() {
 }
 
 export async function fetchDifficultyLevels() {
+  // Check if Supabase is configured before making requests
+  if (!isSupabaseConfigured()) {
+    console.warn('Supabase not configured, using fallback data');
+    return [
+      { value: "easy", label: "Easy - Beginner friendly questions" },
+      { value: "medium", label: "Medium - Standard interview difficulty" },
+      { value: "hard", label: "Hard - Challenging interview questions" },
+    ];
+  }
+
   try {
     const { data, error } = await supabase
       .from('difficulty_levels')
@@ -151,10 +208,16 @@ export async function fetchDifficultyLevels() {
 }
 
 export async function fetchUserInterviews(userId: string) {
+  // Check if Supabase is configured before making requests
+  if (!isSupabaseConfigured()) {
+    console.warn('Supabase not configured, returning empty array');
+    return [];
+  }
+
   try {
     // Check if userId is a valid UUID before making Supabase query
     if (!isValidUUID(userId)) {
-      console.warn(`Invalid UUID format for user ID: ${userId}, returning mock data`);
+      console.warn(`Invalid UUID format for user ID: ${userId}, returning empty array`);
       return [];
     }
 
@@ -170,7 +233,7 @@ export async function fetchUserInterviews(userId: string) {
       .order('scheduled_at', { ascending: false });
     
     if (error) throw error;
-    return data;
+    return data || [];
   } catch (error) {
     console.error('Error fetching interviews:', error);
     return [];
@@ -178,6 +241,12 @@ export async function fetchUserInterviews(userId: string) {
 }
 
 export async function fetchInterviewQuestions(interviewId: string) {
+  // Check if Supabase is configured before making requests
+  if (!isSupabaseConfigured()) {
+    console.warn('Supabase not configured, returning empty array');
+    return [];
+  }
+
   try {
     const { data, error } = await supabase
       .from('interview_questions')
@@ -188,7 +257,7 @@ export async function fetchInterviewQuestions(interviewId: string) {
       .eq('interview_id', interviewId);
     
     if (error) throw error;
-    return data;
+    return data || [];
   } catch (error) {
     console.error('Error fetching interview questions:', error);
     return [];
@@ -196,6 +265,12 @@ export async function fetchInterviewQuestions(interviewId: string) {
 }
 
 export async function fetchInterviewFeedback(interviewId: string) {
+  // Check if Supabase is configured before making requests
+  if (!isSupabaseConfigured()) {
+    console.warn('Supabase not configured, returning null');
+    return null;
+  }
+
   try {
     const { data, error } = await supabase
       .from('feedback')
