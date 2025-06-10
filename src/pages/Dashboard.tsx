@@ -284,7 +284,11 @@ const Dashboard: React.FC = () => {
                   <h3 className="text-xl md:text-2xl font-semibold mb-2 text-white">Ready for your next interview?</h3>
                   <p className="text-white/90 max-w-lg">Set up a new interview simulation with our AI and prepare for success</p>
                 </div>
-                <Button variant="white" size="lg" className="mt-4 md:mt-0 font-medium group-hover:shadow-md transition-all duration-300">
+                <Button 
+                  variant="white" 
+                  size="lg" 
+                  className="mt-4 md:mt-0 font-medium bg-gradient-to-r from-white via-white to-white/90 group-hover:shadow-lg group-hover:shadow-white/20 transition-all duration-300"
+                >
                   <span>Start now</span>
                   <PlusCircle className="ml-2 h-4 w-4 group-hover:rotate-90 transition-transform" />
                 </Button>

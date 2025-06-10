@@ -133,7 +133,7 @@ const LandingPage: React.FC = () => {
                   Prepare for your next job interview with realistic AI simulations, personalized feedback, and expert coaching.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Button asChild size="lg" className="group font-semibold bg-white text-primary hover:bg-white/90">
+                  <Button asChild size="lg" className="group font-semibold bg-gradient-to-r from-white via-white to-white/90 text-primary hover:shadow-lg hover:shadow-white/20 transition-all duration-300 border-0">
                     <Link to="/login?signup=true">
                       Get Started Free
                       <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
