@@ -753,7 +753,7 @@ const InterviewSetup: React.FC = () => {
                                   
                                   <div className="flex items-center gap-3">
                                     {round.isSelected && (round.count || 1) > 1 && (
-                                      <Badge variant="outline" className="bg-blue-50">
+                                      <Badge variant="outline\" className="bg-blue-50">
                                         {round.count}x
                                       </Badge>
                                     )}
