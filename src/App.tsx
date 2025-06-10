@@ -11,7 +11,7 @@ import { InterviewSession } from './pages/InterviewSession'
 import { FeedbackAnalysis } from './pages/FeedbackAnalysis'
 import { Settings } from './pages/Settings'
 import { Pricing } from './pages/Pricing'
-import { Billing } from './pages/Billing'
+import Billing from './pages/Billing'
 import { NotFound } from './pages/NotFound'
 
 function App() {
@@ -73,7 +73,7 @@ function App() {
               } 
             />
             <Route path="/404" element={<NotFound />} />
-            <Route path="*" element={<Navigate to="/404\" replace />} />
+            <Route path="*" element={<Navigate to="/404" replace />} />
           </Routes>
         </div>
       </Router>
