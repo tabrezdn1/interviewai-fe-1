@@ -203,7 +203,22 @@ class TavusAPI {
       throw new Error(`Tavus API Error: ${response.status} - ${errorData.message || response.statusText}`);
     }
 
-    const data = await response.json();
+    let data;
+    try {
+      const responseText = await response.text();
+      console.log('Tavus API raw response:', responseText);
+      
+      if (responseText.trim() === '') {
+        // Handle empty response body
+        data = {};
+      } else {
+        data = JSON.parse(responseText);
+      }
+    } catch (jsonError) {
+      console.error('Failed to parse Tavus API response as JSON:', jsonError);
+      throw new Error(`Invalid JSON response from Tavus API: ${jsonError.message}`);
+    }
+    
     console.log('Tavus API success response:', data);
     return data;
   }
