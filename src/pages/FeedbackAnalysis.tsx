@@ -404,8 +404,8 @@ const FeedbackAnalysis: React.FC = () => {
                   <div className="mt-6 pt-6 border-t border-gray-200">
                     <Button 
                       asChild
-                      variant="interview"
-                      className="w-full flex items-center justify-center gap-2 text-base"
+                     variant="interview"
+                     className="w-full flex items-center justify-center gap-2 font-medium"
                     >
                       <Link to="/setup">
                         Schedule New Interview

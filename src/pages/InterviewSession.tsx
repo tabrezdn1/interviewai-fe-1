@@ -362,7 +362,8 @@ const InterviewSessionContent: React.FC = () => {
             </Button>
             <Button
               onClick={confirmEndCall}
-              className="flex-1"
+              variant="interview"
+              className="flex-1 font-medium"
             >
               End & Get Feedback
             </Button>

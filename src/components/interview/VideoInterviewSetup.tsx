@@ -280,7 +280,8 @@ const VideoInterviewSetup: React.FC<VideoInterviewSetupProps> = ({
               <Button 
                 onClick={checkDevicePermissions} 
                 disabled={isChecking}
-                className="w-full"
+                variant="interview"
+                className="w-full" 
               >
                 {isChecking ? (
                   <>
@@ -405,7 +406,7 @@ const VideoInterviewSetup: React.FC<VideoInterviewSetupProps> = ({
                 ) : (
                   <>
                     <Play className="h-4 w-4 mr-2" />
-                    Start Video Interview
+                    Start Interview
                   </>
                 )}
               </Button>
