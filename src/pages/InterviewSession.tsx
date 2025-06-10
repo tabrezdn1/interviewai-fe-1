@@ -13,6 +13,7 @@ import { getInterview, completeInterview } from '../services/InterviewService';
 import { useMediaAccess } from '../hooks/useMediaAccess';
 import TavusVideoCall from '../components/interview/TavusVideoCall';
 import VideoInterviewSetup from '../components/interview/VideoInterviewSetup';
+import TavusVideoMeeting from '../components/interview/TavusVideoMeeting';
 import UserVideoFeed from '../components/interview/UserVideoFeed';
 import AudioVisualizer from '../components/interview/AudioVisualizer';
 
