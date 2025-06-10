@@ -292,7 +292,7 @@ const Dashboard: React.FC = () => {
                   className="mt-4 md:mt-0 font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600  border-0 shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-blue-500/30 transition-all duration-300"
                 >
                   <span className="text-white">Schedule</span>
-                  <PlusCircle className="ml-2 h-4 w-4 group-hover:rotate-90 transition-transform" />
+                  <PlusCircle className="ml-2 h-4 w-4 text-white group-hover:rotate-90 transition-transform" />
                 </Button>
               </div>
             </div>
