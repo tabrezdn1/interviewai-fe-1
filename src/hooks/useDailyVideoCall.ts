@@ -27,8 +27,8 @@ export const useDailyVideoCall = (options: UseDailyVideoCallOptions): UseDailyVi
   // Use the Daily React hook to get the call object
   const daily = useDaily();
   
-  // Check if we're connected by looking at the call state
-  const isConnected = daily?.callState() === 'joined';
+  // Check if we're connected by looking at the call state with proper type checking
+  const isConnected = daily && typeof daily.callState === 'function' && daily.callState() === 'joined';
 
   const startCall = useCallback(async () => {
     if (!daily) {
