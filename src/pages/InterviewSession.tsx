@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { DailyProvider } from '@daily-co/daily-react';
 import { useDailyVideoCall } from '../hooks/useDailyVideoCall';
 import { 
-  Clock, X, AlertCircle, PauseCircle, PlayCircle, Settings
+  Clock, X, AlertCircle, PauseCircle, PlayCircle, Settings, ChevronLeft
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
@@ -13,6 +13,8 @@ import { useMediaAccess } from '../hooks/useMediaAccess';
 import TavusVideoCall from '../components/interview/TavusVideoCall';
 import VideoInterviewSetup from '../components/interview/VideoInterviewSetup';
 import TavusVideoMeeting from '../components/interview/TavusVideoMeeting';
+import BackButton from '../components/layout/BackButton';
+import Breadcrumb from '../components/layout/Breadcrumb';
 
 interface Question {
   id: number;
@@ -216,6 +218,9 @@ const InterviewSessionContent: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 pt-24 pb-12">
         <div className="container-custom mx-auto">
+          <Breadcrumb />
+          <BackButton className="mb-4" />
+          <h1 className="text-3xl font-bold mb-6">Interview Setup</h1>
           <VideoInterviewSetup
             interviewType={interviewData.interview_types?.type || 'technical'}
             participantName="AI Interviewer"
@@ -235,13 +240,17 @@ const InterviewSessionContent: React.FC = () => {
       <div className="fixed top-0 left-0 right-0 bg-gray-900 border-b border-gray-800 py-3 px-4 z-20">
         <div className="container-custom mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setShowExitConfirm(true)}
-              className="p-2 rounded-full hover:bg-gray-800 transition-colors"
-              aria-label="Exit interview"
+            <Button
+              onClick={() => navigate('/dashboard')}
+              variant="ghost"
+              size="sm"
+              className="flex items-center gap-2 text-white hover:bg-gray-800"
             >
-              <X className="h-5 w-5" />
-            </button>
+              <ChevronLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          </div>
+          <div>
             <h1 className="font-medium truncate">
               {interviewData.title} 
               {interviewData.company && <span className="text-gray-400"> • {interviewData.company}</span>}
@@ -266,6 +275,14 @@ const InterviewSessionContent: React.FC = () => {
               ) : (
                 <PauseCircle className="h-5 w-5" />
               )}
+            </button>
+
+            <button 
+              onClick={() => setShowExitConfirm(true)}
+              className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+              aria-label="Exit interview"
+            >
+              <X className="h-5 w-5" />
             </button>
 
             <button
