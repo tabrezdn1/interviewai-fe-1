@@ -11,6 +11,8 @@ import { Badge } from '../components/ui/badge';
 import { getFeedback } from '../services/InterviewService';
 import { getScoreColor, getScoreTextColor, getScoreBackgroundColor, getScoreRating } from '../lib/utils';
 import { nextStepsRecommendations } from '../data/feedback';
+import BackButton from '../components/layout/BackButton';
+import Breadcrumb from '../components/layout/Breadcrumb';
 
 interface FeedbackData {
   interviewId: string;
@@ -89,12 +91,14 @@ const FeedbackAnalysis: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12">
       <div className="container-custom mx-auto">
+        <Breadcrumb />
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
           className="mb-8"
         >
+          <BackButton className="mb-4" />
           <h1 className="text-3xl font-bold mb-2">Interview Feedback</h1>
           <p className="text-gray-600">
             {feedbackData.title} • {new Date(feedbackData.date).toLocaleDateString('en-US', { 

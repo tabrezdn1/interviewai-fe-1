@@ -9,6 +9,8 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { cn } from '../lib/utils';
+import BackButton from '../components/layout/BackButton';
+import Breadcrumb from '../components/layout/Breadcrumb';
 
 const Pricing: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
@@ -118,6 +120,7 @@ const Pricing: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-12">
       <div className="container-custom mx-auto">
+        <Breadcrumb />
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -125,6 +128,9 @@ const Pricing: React.FC = () => {
           transition={{ duration: 0.3 }}
           className="text-center mb-12"
         >
+          <div className="flex justify-center mb-4">
+            <BackButton />
+          </div>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 text-primary-800 text-sm font-medium mb-4">
             <CreditCard className="h-4 w-4" />
             <span>Pricing Plans</span>
