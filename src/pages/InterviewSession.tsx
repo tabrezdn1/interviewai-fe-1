@@ -4,8 +4,7 @@ import { motion } from 'framer-motion';
 import { DailyProvider } from '@daily-co/daily-react';
 import { useDailyVideoCall } from '../hooks/useDailyVideoCall';
 import { 
-  Mic, MicOff, Video, VideoOff, MessageSquare, Shield,
-  Clock, X, AlertCircle, PauseCircle, PlayCircle, Settings, ChevronRight, Users, Code
+  Clock, X, AlertCircle, PauseCircle, PlayCircle, Settings
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
@@ -14,8 +13,6 @@ import { useMediaAccess } from '../hooks/useMediaAccess';
 import TavusVideoCall from '../components/interview/TavusVideoCall';
 import VideoInterviewSetup from '../components/interview/VideoInterviewSetup';
 import TavusVideoMeeting from '../components/interview/TavusVideoMeeting';
-import UserVideoFeed from '../components/interview/UserVideoFeed';
-import AudioVisualizer from '../components/interview/AudioVisualizer';
 
 interface Question {
   id: number;
@@ -50,11 +47,9 @@ const InterviewSessionContent: React.FC = () => {
   const [isPaused, setIsPaused] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showVideoSetup, setShowVideoSetup] = useState(true);
-  const [showPermissionsDialog, setShowPermissionsDialog] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(1200); // 20 minutes in seconds
   const [responses, setResponses] = useState<Record<number, string>>({});
   const [showSettings, setShowSettings] = useState(false);
-  const [hasRequestedPermissions, setHasRequestedPermissions] = useState(false);
   
   // Daily video call integration
   const {
@@ -76,31 +71,8 @@ const InterviewSessionContent: React.FC = () => {
   
   // Media access for user video/audio
   const {
-    hasVideoPermission,
-    hasAudioPermission,
-    videoStream,
-    audioStream,
-    isRequestingPermissions,
-    error: mediaError,
-    isRecording,
-    requestPermissions,
-    startRecording,
-    stopRecording,
-    toggleVideo,
-    toggleAudio,
     cleanup: cleanupMedia
   } = useMediaAccess();
-  
-  // Debug media state
-  useEffect(() => {
-    console.log('Media state updated:', {
-      hasVideoPermission,
-      hasAudioPermission,
-      hasVideoStream: !!videoStream,
-      hasAudioStream: !!audioStream,
-      isRecording
-    });
-  }, [hasVideoPermission, hasAudioPermission, videoStream, audioStream, isRecording]);
   
   // Handle video setup completion
   const handleVideoSetupComplete = (url: string) => {
@@ -153,60 +125,9 @@ const InterviewSessionContent: React.FC = () => {
       return () => clearInterval(timer);
     }
   }, [loading, isPaused, timeRemaining, conversationUrl]);
-  
-  // Handle permissions request
-  const handleRequestPermissions = async () => {
-    try {
-      console.log('Requesting permissions...');
-      await requestPermissions();
-      setHasRequestedPermissions(true);
-      setShowPermissionsDialog(false);
-      
-      // Start conversation after permissions are granted
-    } catch (error) {
-      console.error('Failed to get permissions:', error);
-    }
-  };
-  
-  const handleSkipPermissions = () => {
-    console.log('Skipping permissions');
-    setHasRequestedPermissions(true);
-    setShowPermissionsDialog(false);
-    
-  };
-  
-  const handleNextQuestion = async () => {
-    if (!interviewData) return;
-    
-    // Stop recording and save audio for this question
-    if (isRecording) {
-      const audioBlob = stopRecording();
-      if (audioBlob) {
-        console.log('Saved audio for question', currentQuestion + 1, 'Size:', audioBlob.size);
-        // Here you could upload the audio to your backend or process it
-      }
-    }
-    // Save the response for the current question
-    setResponses(prev => ({
-      ...prev,
-      [currentQuestion]: `Response for question ${currentQuestion + 1}`
-    }));
-    
-    if (currentQuestion < interviewData.questions.length - 1) {
-      setCurrentQuestion(prev => prev + 1);
-    } else {
-      // Last question, complete the interview
-      await handleCompleteInterview();
-    }
-  };
 
   const handleCompleteInterview = async () => {
     try {
-      // Stop recording if active
-      if (isRecording) {
-        stopRecording();
-      }
-      
       if (id && interviewData) {
         // Prepare mock feedback data
         const feedbackData = {
@@ -349,142 +270,33 @@ const InterviewSessionContent: React.FC = () => {
         </div>
       </div>
       
-      <div className="pt-16 pb-24 min-h-screen flex flex-col">
-        <div className="flex-1 container-custom mx-auto flex flex-col md:flex-row gap-4 p-4">
-          {/* Video area with Tavus integration */}
-          <div className="md:w-2/3 relative">
-            <TavusVideoMeeting
-              conversationUrl={conversationUrl || ''}
-              participantName="AI Interviewer"
-              onMeetingEnd={() => navigate('/dashboard')}
-              onError={handleVideoError}
-              className="w-full h-full min-h-[400px]"
-            />
-          </div>
+      {/* Main video area - now full width */}
+      <div className="pt-16 min-h-screen">
+        <div className="h-full p-4">
+          <TavusVideoMeeting
+            conversationUrl={conversationUrl || ''}
+            participantName="AI Interviewer"
+            onMeetingEnd={() => navigate('/dashboard')}
+            onError={handleVideoError}
+            className="w-full h-[calc(100vh-6rem)]"
+          />
           
-          {/* Question and response area */}
-          <div className="md:w-1/3 flex flex-col">
-            <div className="bg-gray-800 rounded-xl p-6 mb-4 flex-1">
-              <h2 className="text-lg font-semibold mb-4">Current Question</h2>
-              
-              <motion.div
-                key={currentQuestion}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="mb-6"
-              >
-                <p className="text-lg mb-4">
-                  {interviewData.questions[currentQuestion]?.text}
-                </p>
-                
-                {interviewData.questions[currentQuestion]?.hint && (
-                  <div className="bg-gray-700 p-3 rounded-lg flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-yellow-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-gray-300">
-                      <span className="font-medium text-yellow-500 block mb-1">Hint:</span>
-                      {interviewData.questions[currentQuestion].hint}
-                    </p>
-                  </div>
-                )}
-              </motion.div>
-              
-              <div className="text-sm text-gray-400 mt-auto">
-                Question {currentQuestion + 1} of {interviewData.questions.length}
+          {isPaused && (
+            <div className="absolute inset-0 bg-gray-900 bg-opacity-80 flex items-center justify-center">
+              <div className="text-center">
+                <PauseCircle className="h-16 w-16 text-white mx-auto mb-4" />
+                <h3 className="text-xl font-semibold mb-2">Interview Paused</h3>
+                <p className="text-gray-400 mb-6">Take a moment to collect your thoughts</p>
+                <Button
+                  onClick={togglePause}
+                  className="inline-flex items-center gap-2"
+                >
+                  <PlayCircle className="h-5 w-5" />
+                  Resume Interview
+                </Button>
               </div>
             </div>
-            
-            <div className="bg-gray-800 rounded-xl p-6">
-              <h2 className="text-lg font-semibold mb-4">Your Response</h2>
-              
-              {hasAudioPermission && isConversationActive ? (
-                <div className="bg-gray-700 rounded-lg p-4 text-center">
-                  <AudioVisualizer
-                    audioStream={audioStream}
-                    isRecording={isRecording}
-                    className="mb-3"
-                  />
-                  <p className="text-gray-300">
-                    {isRecording 
-                      ? 'Recording your response...'
-                      : 'Ready to record your response'
-                    }
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-gray-700 rounded-lg p-4 text-center">
-                  <MicOff className="h-8 w-8 text-gray-500 mx-auto mb-2" />
-                  <p className="text-gray-400">
-                    {isConversationActive 
-                      ? 'Microphone access not granted'
-                      : 'Waiting for interview to start...'
-                    }
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Bottom controls */}
-      <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 py-4 px-4 z-20">
-        <div className="container-custom mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => {
-                console.log('Bottom audio button clicked');
-                toggleAudio();
-              }}
-              className={`p-3 rounded-full ${
-                hasAudioPermission ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-700 hover:bg-gray-600'
-              } transition-colors`}
-              aria-label={hasAudioPermission ? "Disable microphone" : "Enable microphone"}
-            >
-              {hasAudioPermission ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
-            </button>
-            
-            <button
-              onClick={() => {
-                console.log('Bottom video button clicked');
-                toggleVideo();
-              }}
-              className={`p-3 rounded-full ${
-                hasVideoPermission ? 'bg-primary-600 hover:bg-primary-700' : 'bg-gray-700 hover:bg-gray-600'
-              } transition-colors`}
-              aria-label={hasVideoPermission ? "Disable video" : "Enable video"}
-            >
-              {hasVideoPermission ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
-            </button>
-            
-            <button
-              className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors"
-              aria-label="Show transcript"
-            >
-              <MessageSquare className="h-5 w-5" />
-            </button>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* Show next round button if in complete interview mode */}
-            {false && (
-              <div className="text-sm text-gray-400">
-                Round 1 of 1
-              </div>
-            )}
-            
-            <Button
-              onClick={handleNextQuestion}
-              className="btn-primary"
-              disabled={!conversationUrl || isRequestingPermissions}
-            >
-              {currentQuestion < interviewData.questions.length - 1 
-                ? 'Next Question' 
-                  : 'Finish Interview'
-              }
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
+          )}
         </div>
       </div>
       
@@ -520,71 +332,10 @@ const InterviewSessionContent: React.FC = () => {
           </motion.div>
         </div>
       )}
-      
-      {/* Permissions Dialog */}
-      <Dialog open={showPermissionsDialog} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              Camera & Microphone Access
-            </DialogTitle>
-            <DialogDescription>
-              To provide the best interview experience, we need access to your camera and microphone.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-2">Why we need these permissions:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• <strong>Camera:</strong> Show your video to the AI interviewer</li>
-                <li>• <strong>Microphone:</strong> Record your responses for analysis</li>
-                <li>• <strong>Privacy:</strong> All data stays on your device during the interview</li>
-              </ul>
-            </div>
-            
-            {mediaError && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <p className="text-sm text-red-800">{mediaError}</p>
-              </div>
-            )}
-            
-            <div className="flex flex-col gap-3">
-              <Button 
-                onClick={handleRequestPermissions}
-                disabled={isRequestingPermissions}
-                className="w-full"
-              >
-                {isRequestingPermissions ? (
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                    Requesting Access...
-                  </div>
-                ) : (
-                  'Allow Camera & Microphone'
-                )}
-              </Button>
-              
-              <Button 
-                onClick={handleSkipPermissions}
-                variant="outline"
-                className="w-full"
-                disabled={isRequestingPermissions}
-              >
-                Continue Without Permissions
-              </Button>
-            </div>
-            
-            <p className="text-xs text-gray-500 text-center">
-              You can change these permissions later in your browser settings
-            </p>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
+
 // Main component wrapped with DailyProvider
 const InterviewSession: React.FC = () => {
   return (
