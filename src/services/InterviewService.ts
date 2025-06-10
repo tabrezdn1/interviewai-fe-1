@@ -67,8 +67,6 @@ export async function createInterview(userId: string, formData: InterviewFormDat
       user_id: userId,
       title: formData.interviewMode === 'complete' 
         ? `Complete ${formData.role} Interview` 
-      title: formData.interviewMode === 'complete' 
-        ? `Complete ${formData.role} Interview` 
         : `${formData.role} ${formData.selectedRounds?.[0] || ''} Interview`,
       company: formData.company || null,
       role: formData.role,
