@@ -51,6 +51,12 @@ interface InterviewRound {
   count?: number;
 }
 
+interface JobSuggestion {
+  role: string;
+  company?: string;
+  icon: React.ReactNode;
+}
+
 interface InterviewFormData {
   interviewType: string;
   role: string;
@@ -75,6 +81,7 @@ const InterviewSetup: React.FC = () => {
   const [availableRounds, setAvailableRounds] = useState<any[]>([]);
   const [interviewModes, setInterviewModes] = useState<InterviewMode[]>([]);
   const [customRounds, setCustomRounds] = useState<InterviewRound[]>([]);
+  const [jobSuggestions, setJobSuggestions] = useState<JobSuggestion[]>([]);
   
   const [formData, setFormData] = useState<InterviewFormData>({
     interviewType: '',
@@ -87,6 +94,55 @@ const InterviewSetup: React.FC = () => {
     selectedRounds: [],
     roundDurations: {}
   });
+
+  // Generate job suggestions based on popular roles
+  const generateJobSuggestions = useCallback(() => {
+    const suggestions: JobSuggestion[] = [
+      { 
+        role: 'Frontend Developer', 
+        company: 'Google',
+        icon: <Code className="h-5 w-5 text-blue-500" />
+      },
+      { 
+        role: 'Product Manager', 
+        company: 'Amazon',
+        icon: <Briefcase className="h-5 w-5 text-green-500" />
+      },
+      { 
+        role: 'Data Scientist', 
+        company: 'Microsoft',
+        icon: <Laptop className="h-5 w-5 text-purple-500" />
+      },
+      { 
+        role: 'UX Designer', 
+        company: 'Apple',
+        icon: <Smartphone className="h-5 w-5 text-gray-500" />
+      },
+      { 
+        role: 'Software Engineer', 
+        company: 'Netflix',
+        icon: <Code className="h-5 w-5 text-red-500" />
+      },
+      { 
+        role: 'DevOps Engineer', 
+        company: 'Spotify',
+        icon: <Code className="h-5 w-5 text-green-500" />
+      },
+      { 
+        role: 'Marketing Manager', 
+        company: 'Meta',
+        icon: <Building className="h-5 w-5 text-blue-500" />
+      },
+      { 
+        role: 'Full Stack Developer', 
+        icon: <Code className="h-5 w-5 text-indigo-500" />
+      }
+    ];
+    
+    // Shuffle and take first 6
+    const shuffled = [...suggestions].sort(() => 0.5 - Math.random());
+    setJobSuggestions(shuffled.slice(0, 6));
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -108,10 +164,18 @@ const InterviewSetup: React.FC = () => {
     }));
   };
 
+  const handleJobSuggestionSelect = (suggestion: JobSuggestion) => {
+    setFormData(prev => ({
+      ...prev,
+      role: suggestion.role,
+      company: suggestion.company || prev.company
+    }));
+  };
+
   const isStepValid = () => {
-    if (step === 1) return formData.interviewType !== '';
-    if (step === 2) return formData.interviewMode !== '';
-    if (step === 3) return formData.role !== '';
+    if (step === 1) return !!formData.interviewMode;
+    if (step === 2) return !!formData.interviewType;
+    if (step === 3) return !!formData.role;
     return true;
   };
 
@@ -134,7 +198,7 @@ const InterviewSetup: React.FC = () => {
       }
     }
   };
-
+  
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1);
@@ -199,6 +263,9 @@ const InterviewSetup: React.FC = () => {
         }
         
         setInterviewModes(modes);
+        
+        // Generate job suggestions
+        generateJobSuggestions();
       } catch (error) {
         console.error('Error loading setup data:', error);
       } finally {
@@ -207,7 +274,7 @@ const InterviewSetup: React.FC = () => {
     };
     
     loadData();
-  }, []);
+  }, [generateJobSuggestions]);
   
   if (loading) {
     return (
@@ -286,41 +353,15 @@ const InterviewSetup: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex justify-between mt-2 text-sm text-gray-600">
-                      <span>Interview Type</span>
                       <span>Interview Mode</span>
+                      <span>Interview Type</span>
                       <span>Job Details</span>
                       <span>Settings</span>
                     </div>
                   </div>
                   
-                  {/* Step 1: Interview Type */}
+                  {/* Step 1: Interview Mode */}
                   {step === 1 && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <h2 className="text-xl font-semibold mb-6">Select Interview Type</h2>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                        {interviewTypes.map((type) => (
-                          <InterviewTypeCard
-                            key={type.type}
-                            type={type.type}
-                            title={type.title}
-                            description={type.description}
-                            icon={getIconComponent(type.icon)}
-                            selected={formData.interviewType === type.type}
-                            onSelect={handleTypeSelect}
-                          />
-                        ))}
-                      </div>
-                    </motion.div>
-                  )}
-                  
-                  {/* Step 2: Interview Mode */}
-                  {step === 2 && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -363,6 +404,32 @@ const InterviewSetup: React.FC = () => {
                     </motion.div>
                   )}
                   
+                  {/* Step 2: Interview Type */}
+                  {step === 2 && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <h2 className="text-xl font-semibold mb-6">Select Interview Type</h2>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                        {interviewTypes.map((type) => (
+                          <InterviewTypeCard
+                            key={type.type}
+                            type={type.type}
+                            title={type.title}
+                            description={type.description}
+                            icon={getIconComponent(type.icon)}
+                            selected={formData.interviewType === type.type}
+                            onSelect={handleTypeSelect}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                  
                   {/* Step 3: Job Details */}
                   {step === 3 && (
                     <motion.div
@@ -388,6 +455,33 @@ const InterviewSetup: React.FC = () => {
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             required
                           />
+                        </div>
+                        
+                        {/* Job Suggestions */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <Sparkles className="h-4 w-4 text-primary-600" />
+                            <h3 className="text-sm font-medium text-gray-700">Popular Job Roles</h3>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {jobSuggestions.map((suggestion, index) => (
+                              <button
+                                key={index}
+                                onClick={() => handleJobSuggestionSelect(suggestion)}
+                                className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors text-left"
+                              >
+                                <div className="flex-shrink-0">
+                                  {suggestion.icon}
+                                </div>
+                                <div className="overflow-hidden">
+                                  <p className="font-medium text-sm truncate">{suggestion.role}</p>
+                                  {suggestion.company && (
+                                    <p className="text-xs text-gray-500 truncate">{suggestion.company}</p>
+                                  )}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
                         </div>
                         
                         <div>
@@ -486,12 +580,12 @@ const InterviewSetup: React.FC = () => {
                           <h3 className="font-medium mb-2">Interview Summary</h3>
                           <ul className="space-y-2 text-sm text-gray-600">
                             <li className="flex justify-between">
-                              <span>Type:</span>
-                              <span className="font-medium text-gray-900 capitalize">{formData.interviewType}</span>
-                            </li>
-                            <li className="flex justify-between">
                               <span>Mode:</span>
                               <span className="font-medium text-gray-900">{formData.interviewMode === 'complete' ? 'Complete Interview' : 'Single Round'}</span>
+                            </li>
+                            <li className="flex justify-between">
+                              <span>Type:</span>
+                              <span className="font-medium text-gray-900 capitalize">{formData.interviewType}</span>
                             </li>
                             <li className="flex justify-between">
                               <span>Role:</span>
