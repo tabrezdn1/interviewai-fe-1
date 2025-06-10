@@ -50,6 +50,7 @@ const InterviewSessionContent: React.FC = () => {
   const [timeRemaining, setTimeRemaining] = useState(1200); // 20 minutes in seconds
   const [responses, setResponses] = useState<Record<number, string>>({});
   const [showSettings, setShowSettings] = useState(false);
+  const [showEndCallConfirm, setShowEndCallConfirm] = useState(false);
   
   // Daily video call integration
   const {
@@ -179,6 +180,14 @@ const InterviewSessionContent: React.FC = () => {
     navigate('/dashboard');
   };
 
+  const handleEndCallRequest = () => {
+    setShowEndCallConfirm(true);
+  };
+
+  const confirmEndCall = async () => {
+    setShowEndCallConfirm(false);
+    await handleCompleteInterview();
+  };
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center text-white">
@@ -276,7 +285,7 @@ const InterviewSessionContent: React.FC = () => {
           <TavusVideoMeeting
             conversationUrl={conversationUrl || ''}
             participantName="AI Interviewer"
-            onMeetingEnd={() => navigate('/dashboard')}
+            onMeetingEnd={handleEndCallRequest}
             onError={handleVideoError}
             className="w-full h-[calc(100vh-6rem)]"
           />
@@ -332,6 +341,33 @@ const InterviewSessionContent: React.FC = () => {
           </motion.div>
         </div>
       )}
+      
+      {/* End Call Confirmation Dialog */}
+      <Dialog open={showEndCallConfirm} onOpenChange={setShowEndCallConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>End Interview?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to end this interview? This will complete the session and generate your feedback report.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-4 mt-6">
+            <Button
+              onClick={() => setShowEndCallConfirm(false)}
+              variant="outline"
+              className="flex-1"
+            >
+              Continue Interview
+            </Button>
+            <Button
+              onClick={confirmEndCall}
+              className="flex-1"
+            >
+              End & Get Feedback
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
