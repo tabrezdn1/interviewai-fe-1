@@ -6,7 +6,7 @@ interface AuthProviderProps {
   children: React.ReactNode
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
@@ -52,3 +52,5 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     </AuthContextProvider>
   )
 }
+
+export default AuthProvider
