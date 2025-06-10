@@ -134,10 +134,12 @@ const VideoInterviewSetup: React.FC<VideoInterviewSetupProps> = ({
 
   const handleStartInterview = async () => {
     try {
+      console.log('Starting interview with type:', interviewType);
       await startConversation();
     } catch (error) {
       console.error('Failed to start interview:', error);
-      onError('Failed to start video call');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start video call';
+      onError(errorMessage);
     }
   };
 

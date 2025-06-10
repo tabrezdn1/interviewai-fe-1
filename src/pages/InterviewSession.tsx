@@ -83,6 +83,10 @@ const InterviewSessionContent: React.FC = () => {
 
   const handleVideoError = (error: string) => {
     console.error('Video error:', error);
+    // Don't show error dialog for demo mode message
+    if (error.includes('demo mode')) {
+      console.log('Using demo mode, continuing with mock interview');
+    }
   };
 
   // Format time as MM:SS

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getTavusAPI } from '../lib/tavus';
+import { getTavusAPI, getReplicaForInterviewType } from '../lib/tavus';
 
 interface UseTavusVideoMeetingOptions {
   interviewType: string;
@@ -33,14 +33,24 @@ export const useTavusVideoMeeting = (options: UseTavusVideoMeetingOptions): UseT
     try {
       console.log('Creating Tavus conversation...');
       
-      // For demo purposes, we'll use a stock demo persona
-      // In production, you would use your own replica and persona IDs
+      // Get the appropriate replica and persona IDs for this interview type
+      const { replicaId, personaId } = getReplicaForInterviewType(options.interviewType);
+      
+      if (!replicaId) {
+        throw new Error('replica_id is required for Tavus conversation');
+      }
+      
+      if (!personaId) {
+        throw new Error('persona_id is required for Tavus conversation');
+      }
+      
       const tavusAPI = getTavusAPI();
       
       // Create conversation with green screen enabled
       const conversationRequest = {
-        // Use the stock demo persona if available, or mock one
-        persona_id: "p9a95912", // Stock demo persona
+        replica_id: replicaId,
+        persona_id: personaId,
+        conversation_name: `${options.role} Interview - ${new Date().toISOString()}`,
         properties: {
           // Apply greenscreen to the background for chroma key effect
           apply_greenscreen: true,
@@ -66,13 +76,11 @@ export const useTavusVideoMeeting = (options: UseTavusVideoMeetingOptions): UseT
       
       // Create a mock conversation URL for development/testing
       console.log('Creating mock conversation URL for development');
+      setError('Using demo mode - add your Tavus API key for real AI video');
       const mockUrl = `https://tavus.io/conversations/mock-conversation-${Date.now()}`;
       setConversationUrl(mockUrl);
       setConversationId(`mock-${Date.now()}`);
       setIsConnected(true);
-      
-      // Set error message but don't throw - we'll use the mock URL
-      setError('Using demo mode - add your Tavus API key for real AI video');
     } finally {
       setIsLoading(false);
     }

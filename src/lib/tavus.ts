@@ -112,21 +112,43 @@ export const getInterviewRounds = (): InterviewRound[] => {
 // Get replica and persona IDs for specific interview type
 export const getReplicaForInterviewType = (interviewType: string): { replicaId: string | null; personaId: string | null } => {
   const rounds = getInterviewRounds();
+  console.log('Getting replica for interview type:', interviewType, 'Available rounds:', rounds);
   
   // Map interview types to rounds
   const typeToRoundMap: Record<string, string> = {
     'screening': 'screening',
     'technical': 'technical',
     'behavioral': 'behavioral',
-    'mixed': 'technical' // Default to technical for mixed interviews
+    'mixed': 'technical', // Default to technical for mixed interviews
+    'phone': 'screening' // Map phone to screening
   };
 
-  const roundId = typeToRoundMap[interviewType];
+  // Default to technical if the interview type isn't recognized
+  const roundId = typeToRoundMap[interviewType] || 'technical';
   const round = rounds.find(r => r.id === roundId);
+  console.log('Selected round:', round);
   
+  if (round) {
+    return {
+      replicaId: round.replicaId,
+      personaId: round.personaId
+    };
+  }
+  
+  // If no matching round found, try to use any available round
+  if (rounds.length > 0) {
+    console.log('No matching round found, using first available round:', rounds[0]);
+    return {
+      replicaId: rounds[0].replicaId,
+      personaId: rounds[0].personaId
+    };
+  }
+  
+  // If no rounds available, return null values
+  console.warn('No rounds available for interview type:', interviewType);
   return {
-    replicaId: round?.replicaId || null,
-    personaId: round?.personaId || null
+    replicaId: null,
+    personaId: null
   };
 };
 
