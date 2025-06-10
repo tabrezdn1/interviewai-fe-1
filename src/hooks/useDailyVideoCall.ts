@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { DailyCall } from '@daily-co/daily-js';
+import { useState, useCallback } from 'react';
+import { useDaily } from '@daily-co/daily-react';
 import { getTavusAPI } from '../lib/tavus';
 import { getReplicaForInterviewType } from '../lib/tavus';
 
@@ -17,54 +17,21 @@ interface UseDailyVideoCallReturn {
   isConnected: boolean;
   startCall: () => Promise<void>;
   endCall: () => Promise<void>;
-  dailyCall: DailyCall | null;
 }
 
 export const useDailyVideoCall = (options: UseDailyVideoCallOptions): UseDailyVideoCallReturn => {
   const [conversationUrl, setConversationUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [dailyCall, setDailyCall] = useState<DailyCall | null>(null);
-
-  // Initialize Daily call instance
-  useEffect(() => {
-    const initializeDaily = async () => {
-      try {
-        const { DailyIframe } = await import('@daily-co/daily-js');
-        const call = DailyIframe.createCallObject();
-        setDailyCall(call);
-
-        // Set up event listeners
-        call.on('joined-meeting', () => {
-          console.log('Joined Daily meeting');
-          setIsConnected(true);
-        });
-
-        call.on('left-meeting', () => {
-          console.log('Left Daily meeting');
-          setIsConnected(false);
-        });
-
-        call.on('error', (error) => {
-          console.error('Daily call error:', error);
-          setError(error.errorMsg || 'Video call error occurred');
-        });
-
-        return () => {
-          call.destroy();
-        };
-      } catch (error) {
-        console.error('Failed to initialize Daily:', error);
-        setError('Failed to initialize video calling');
-      }
-    };
-
-    initializeDaily();
-  }, []);
+  
+  // Use the Daily React hook to get the call object
+  const daily = useDaily();
+  
+  // Check if we're connected by looking at the call state
+  const isConnected = daily?.callState() === 'joined';
 
   const startCall = useCallback(async () => {
-    if (!dailyCall) {
+    if (!daily) {
       setError('Video calling not initialized');
       return;
     }
@@ -104,7 +71,7 @@ export const useDailyVideoCall = (options: UseDailyVideoCallOptions): UseDailyVi
       console.log('Tavus conversation created:', conversation);
 
       // Join the Daily call using the conversation URL
-      await dailyCall.join({ 
+      await daily.join({ 
         url: conversation.conversation_url,
         userName: options.participantName
       });
@@ -120,14 +87,14 @@ export const useDailyVideoCall = (options: UseDailyVideoCallOptions): UseDailyVi
     } finally {
       setIsLoading(false);
     }
-  }, [dailyCall, options]);
+  }, [daily, options]);
 
   const endCall = useCallback(async () => {
-    if (!dailyCall) return;
+    if (!daily) return;
 
     try {
       console.log('Ending Daily call...');
-      await dailyCall.leave();
+      await daily.leave();
       
       // End Tavus conversation if we have the conversation URL
       if (conversationUrl) {
@@ -149,16 +116,7 @@ export const useDailyVideoCall = (options: UseDailyVideoCallOptions): UseDailyVi
     } catch (error) {
       console.error('Failed to end video call:', error);
     }
-  }, [dailyCall, conversationUrl]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (dailyCall) {
-        dailyCall.destroy();
-      }
-    };
-  }, [dailyCall]);
+  }, [daily, conversationUrl]);
 
   return {
     conversationUrl,
@@ -167,6 +125,5 @@ export const useDailyVideoCall = (options: UseDailyVideoCallOptions): UseDailyVi
     isConnected,
     startCall,
     endCall,
-    dailyCall,
   };
 };
