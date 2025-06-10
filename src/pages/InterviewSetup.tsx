@@ -501,13 +501,20 @@ const InterviewSetup: React.FC = () => {
                         Back
                       </Button>
                     ) : (
-                      <div></div>
+                      <Button
+                        onClick={() => navigate('/dashboard')}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Back to Dashboard
+                      </Button>
                     )}
                     
                     <Button
                       onClick={handleNext}
                       disabled={!isStepValid() || submitting}
-                     className={`flex items-center gap-2 ${
+                     className={`flex items-center gap-2 ${step === 4 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105' : ''} ${
                         !isStepValid() || submitting ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
                      variant={step === 4 ? 'interview' : 'default'}
