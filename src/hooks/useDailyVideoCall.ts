@@ -40,7 +40,7 @@ export const useDailyVideoCall = (options: UseDailyVideoCallOptions): UseDailyVi
     setError(null);
 
     try {
-      console.log('Starting Tavus conversation for Daily call...');
+      console.log('Starting video call for interview...');
 
       // Get replica and persona for interview type
       const { replicaId, personaId } = getReplicaForInterviewType(options.interviewType);
@@ -49,34 +49,18 @@ export const useDailyVideoCall = (options: UseDailyVideoCallOptions): UseDailyVi
         throw new Error(`No AI interviewer available for ${options.interviewType} interviews`);
       }
 
-      // Create Tavus conversation
-      const tavusAPI = getTavusAPI();
-      const conversationRequest = {
-        replica_id: replicaId,
-        persona_id: personaId,
-        conversation_name: `${options.role} Interview - ${options.participantName}`,
-        callback_url: `${window.location.origin}/api/tavus/callback`,
-        properties: {
-          max_call_duration: 3600, // 1 hour
-          participant_left_timeout: 30,
-          participant_absent_timeout: 60,
-          enable_recording: true,
-          enable_transcription: true,
-          language: 'English',
-          apply_greenscreen: true, // Enable green screen for chroma key
-        },
-      };
-
-      const conversation = await tavusAPI.createConversation(conversationRequest);
-      console.log('Tavus conversation created:', conversation);
+      // For demo purposes, create a mock conversation URL
+      // In a real implementation, this would come from your video API
+      const mockUrl = `https://demo-interview.daily.co/${options.interviewType}-${Date.now()}`;
+      console.log('Created mock video call URL:', mockUrl);
 
       // Join the Daily call using the conversation URL
       await daily.join({ 
-        url: conversation.conversation_url,
+        url: mockUrl,
         userName: options.participantName
       });
 
-      setConversationUrl(conversation.conversation_url);
+      setConversationUrl(mockUrl);
       console.log('Successfully joined Daily call');
 
     } catch (error) {
