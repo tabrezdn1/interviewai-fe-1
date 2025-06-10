@@ -75,7 +75,7 @@ const InterviewSetup: React.FC = () => {
   ];
   
   const [formData, setFormData] = useState<InterviewFormData>({
-    type: '',
+    interviewType: 'technical', // Default to technical for both modes
     role: '',
     company: '',
     experience: '',
@@ -188,7 +188,9 @@ const InterviewSetup: React.FC = () => {
       // Reset duration based on mode
       duration: mode === 'complete' 
         ? customRounds.filter(r => r.isSelected).reduce((total, round) => total + (round.duration * (round.count || 1)), 0)
-        : 20
+        : 20,
+      // For complete mode, set interviewType to technical as default
+      interviewType: mode === 'complete' ? 'technical' : prev.interviewType
     }));
     
     // If single mode is selected, reset to step 2
@@ -201,7 +203,7 @@ const InterviewSetup: React.FC = () => {
   };
   
   const handleRoundTypeSelect = (type: string) => {
-    setFormData(prev => ({ ...prev, type }));
+    setFormData(prev => ({ ...prev, interviewType: type }));
     
     // Move to next step
     setStep(3);
@@ -301,6 +303,38 @@ const InterviewSetup: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
   
+  const validateFormData = () => {
+    // Check if interview type is set
+    if (!formData.interviewType || formData.interviewType.trim() === '') {
+      throw new Error('Interview type is required. Please select an interview type.');
+    }
+    
+    // Check if role is set
+    if (!formData.role || formData.role.trim() === '') {
+      throw new Error('Job role is required. Please enter a job role.');
+    }
+    
+    // Check if experience level is set
+    if (!formData.experience || formData.experience.trim() === '') {
+      throw new Error('Experience level is required. Please select your experience level.');
+    }
+    
+    // Check if difficulty level is set
+    if (!formData.difficulty || formData.difficulty.trim() === '') {
+      throw new Error('Difficulty level is required. Please select a difficulty level.');
+    }
+    
+    // For complete mode, check if at least one round is selected
+    if (formData.interviewMode === 'complete') {
+      const selectedRounds = customRounds.filter(r => r.isSelected);
+      if (selectedRounds.length === 0) {
+        throw new Error('At least one interview round must be selected for complete interview mode.');
+      }
+    }
+    
+    return true;
+  };
+  
   const handleNext = async () => {
     if (step < 4) {
       setStep(step + 1);
@@ -309,6 +343,9 @@ const InterviewSetup: React.FC = () => {
       setSubmitting(true);
       try {
         if (user) {
+          // Validate form data before submission
+          validateFormData();
+          
           // Prepare form data with selected rounds
           const interviewData = {
             ...formData,
@@ -317,12 +354,15 @@ const InterviewSetup: React.FC = () => {
               .flatMap(r => Array(r.count || 1).fill(r.id))
           };
           
+          console.log('Creating interview with data:', interviewData);
+          
           const interview = await createInterview(user.id, interviewData);
           navigate(`/interview/${interview.id}`);
         }
       } catch (error) {
         console.error('Error creating interview:', error);
-        // Handle error - show message to user
+        // Show error message to user
+        alert(`Error creating interview: ${error instanceof Error ? error.message : 'Unknown error occurred'}`);
       } finally {
         setSubmitting(false);
       }
@@ -338,7 +378,7 @@ const InterviewSetup: React.FC = () => {
   const isStepValid = () => {
     if (step === 1) return formData.interviewMode !== '';
     if (step === 2) {
-      if (formData.interviewMode === 'single') return formData.type !== '';
+      if (formData.interviewMode === 'single') return formData.interviewType !== '';
       return customRounds.some(r => r.isSelected);
     }
     if (step === 3) return formData.role !== '';
@@ -656,16 +696,16 @@ const InterviewSetup: React.FC = () => {
                               <div
                                 key={round.id}
                                 className={`border rounded-lg p-5 cursor-pointer transition-all ${
-                                  formData.type === round.type
+                                  formData.interviewType === round.type
                                     ? 'border-primary bg-primary/5 shadow-sm'
                                     : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                 }`}
                                 onClick={() => handleRoundTypeSelect(round.type)}
                               >
                                 <div className={`w-10 h-10 rounded-full mb-3 flex items-center justify-center ${
-                                  formData.type === round.type ? 'bg-primary/20' : 'bg-gray-100'
+                                  formData.interviewType === round.type ? 'bg-primary/20' : 'bg-gray-100'
                                 }`}>
-                                  <div className={formData.type === round.type ? 'text-primary' : 'text-gray-600'}>
+                                  <div className={formData.interviewType === round.type ? 'text-primary' : 'text-gray-600'}>
                                     {round.icon}
                                   </div>
                                 </div>
@@ -676,7 +716,7 @@ const InterviewSetup: React.FC = () => {
                                   <span>{round.duration} minutes</span>
                                 </div>
                                 
-                                {formData.type === round.type && (
+                                {formData.interviewType === round.type && (
                                   <div className="mt-3 text-primary text-sm font-medium flex items-center gap-1">
                                     <Check className="h-4 w-4" />
                                     Selected
@@ -713,7 +753,7 @@ const InterviewSetup: React.FC = () => {
                                   
                                   <div className="flex items-center gap-3">
                                     {round.isSelected && (round.count || 1) > 1 && (
-                                      <Badge variant="outline\" className="bg-blue-50">
+                                      <Badge variant="outline" className="bg-blue-50">
                                         {round.count}x
                                       </Badge>
                                     )}
@@ -806,7 +846,7 @@ const InterviewSetup: React.FC = () => {
                       <div className="space-y-6">
                         <div>
                           <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
-                            Job Title / Role
+                            Job Title / Role *
                           </label>
                           <input
                             type="text"
@@ -865,7 +905,7 @@ const InterviewSetup: React.FC = () => {
                         
                         <div>
                           <label htmlFor="experience" className="block text-sm font-medium text-gray-700 mb-1">
-                            Your Experience Level
+                            Your Experience Level *
                           </label>
                           <select
                             id="experience"
@@ -873,6 +913,7 @@ const InterviewSetup: React.FC = () => {
                             value={formData.experience}
                             onChange={handleInputChange}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                            required
                           >
                             <option value="">Select experience level</option>
                             {experienceLevels.map(level => (
@@ -883,7 +924,7 @@ const InterviewSetup: React.FC = () => {
                         
                         <div>
                           <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700 mb-1">
-                            Difficulty Level
+                            Difficulty Level *
                           </label>
                           <select
                             id="difficulty"
@@ -891,6 +932,7 @@ const InterviewSetup: React.FC = () => {
                             value={formData.difficulty}
                             onChange={handleInputChange}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                            required
                           >
                             {difficultyLevels.map(level => (
                               <option key={level.value} value={level.value}>{level.label}</option>
@@ -1040,7 +1082,7 @@ const InterviewSetup: React.FC = () => {
                             {formData.interviewMode === 'single' ? (
                               <li className="flex justify-between">
                                 <span>Round Type:</span>
-                                <span className="font-medium text-gray-900 capitalize">{formData.type}</span>
+                                <span className="font-medium text-gray-900 capitalize">{formData.interviewType}</span>
                               </li>
                             ) : (
                               <li className="flex justify-between">

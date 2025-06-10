@@ -14,7 +14,6 @@ export interface InterviewFormData {
   interviewMode?: string;
   selectedRounds?: string[];
   roundDurations?: Record<string, number>;
-  roundDurations?: Record<string, number>;
 }
 
 // Helper function to check if Supabase is properly configured
@@ -37,6 +36,25 @@ export async function createInterview(userId: string, formData: InterviewFormDat
   }
 
   try {
+    // Validate required fields
+    if (!formData.interviewType || formData.interviewType.trim() === '') {
+      throw new Error('Interview type is required');
+    }
+    
+    if (!formData.role || formData.role.trim() === '') {
+      throw new Error('Job role is required');
+    }
+    
+    if (!formData.experience || formData.experience.trim() === '') {
+      throw new Error('Experience level is required');
+    }
+    
+    if (!formData.difficulty || formData.difficulty.trim() === '') {
+      throw new Error('Difficulty level is required');
+    }
+
+    console.log('Creating interview with form data:', formData);
+
     // Get the IDs for the selected types
     const { data: interviewTypeData, error: typeError } = await supabase
       .from('interview_types')
@@ -44,7 +62,10 @@ export async function createInterview(userId: string, formData: InterviewFormDat
       .eq('type', formData.interviewType)
       .single();
     
-    if (typeError) throw typeError;
+    if (typeError) {
+      console.error('Error fetching interview type:', typeError);
+      throw new Error(`Interview type "${formData.interviewType}" not found in database`);
+    }
     
     const { data: experienceLevelData, error: expError } = await supabase
       .from('experience_levels')
@@ -61,13 +82,16 @@ export async function createInterview(userId: string, formData: InterviewFormDat
       .eq('value', formData.difficulty)
       .single();
     
-    if (diffError) throw diffError;
+    if (diffError) {
+      console.error('Error fetching difficulty level:', diffError);
+      throw new Error(`Difficulty level "${formData.difficulty}" not found in database`);
+    }
     
     const interviewData = {
       user_id: userId,
       title: formData.interviewMode === 'complete' 
         ? `Complete ${formData.role} Interview` 
-        : `${formData.role} ${formData.selectedRounds?.[0] || ''} Interview`,
+        : `${formData.role} ${formData.interviewType} Interview`,
       company: formData.company || null,
       role: formData.role,
       interview_type_id: interviewTypeData.id,
@@ -78,13 +102,18 @@ export async function createInterview(userId: string, formData: InterviewFormDat
       duration: formData.duration
     };
     
+    console.log('Inserting interview data:', interviewData);
+    
     const { data: interview, error } = await supabase
       .from('interviews')
       .insert([interviewData])
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error inserting interview:', error);
+      throw error;
+    }
     
     // Assign questions to the interview based on type
     const { data: questions, error: questionsError } = await supabase
@@ -93,9 +122,12 @@ export async function createInterview(userId: string, formData: InterviewFormDat
       .eq('interview_type_id', interviewTypeData.id)
       .limit(5);
     
-    if (questionsError) throw questionsError;
+    if (questionsError) {
+      console.error('Error fetching questions:', questionsError);
+      // Don't throw error for questions, just log it
+    }
     
-    if (questions.length > 0) {
+    if (questions && questions.length > 0) {
       const interviewQuestions = questions.map((q) => ({
         interview_id: interview.id,
         question_id: q.id
@@ -105,9 +137,13 @@ export async function createInterview(userId: string, formData: InterviewFormDat
         .from('interview_questions')
         .insert(interviewQuestions);
       
-      if (iqError) throw iqError;
+      if (iqError) {
+        console.error('Error inserting interview questions:', iqError);
+        // Don't throw error for questions, just log it
+      }
     }
     
+    console.log('Successfully created interview:', interview);
     return interview;
   } catch (error) {
     console.error('Error creating interview:', error);
