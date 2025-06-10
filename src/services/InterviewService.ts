@@ -14,6 +14,7 @@ export interface InterviewFormData {
   interviewMode?: string;
   selectedRounds?: string[];
   roundDurations?: Record<string, number>;
+  roundDurations?: Record<string, number>;
 }
 
 // Helper function to check if Supabase is properly configured
@@ -64,6 +65,8 @@ export async function createInterview(userId: string, formData: InterviewFormDat
     
     const interviewData = {
       user_id: userId,
+      title: formData.interviewMode === 'complete' 
+        ? `Complete ${formData.role} Interview` 
       title: formData.interviewMode === 'complete' 
         ? `Complete ${formData.role} Interview` 
         : `${formData.role} ${formData.selectedRounds?.[0] || ''} Interview`,

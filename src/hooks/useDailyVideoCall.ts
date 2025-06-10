@@ -17,6 +17,7 @@ interface UseDailyVideoCallReturn {
   isConnected: boolean;
   startCall: () => Promise<void>;
   endCall: () => Promise<void>;
+  dailyCall: any;
 }
 
 export const useDailyVideoCall = (options: UseDailyVideoCallOptions): UseDailyVideoCallReturn => {
@@ -109,5 +110,6 @@ export const useDailyVideoCall = (options: UseDailyVideoCallOptions): UseDailyVi
     isConnected,
     startCall,
     endCall,
+    dailyCall: daily
   };
 };
