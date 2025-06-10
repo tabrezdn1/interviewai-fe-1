@@ -32,27 +32,6 @@ interface LevelOption {
   label: string;
 }
 
-interface InterviewMode {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  rounds: string[];
-  duration: number;
-  maxRounds?: number;
-}
-
-interface InterviewRound {
-  id: string;
-  type: string;
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  duration: number;
-  isSelected?: boolean;
-  count?: number;
-}
-
 interface JobSuggestion {
   role: string;
   company?: string;
@@ -66,12 +45,8 @@ interface InterviewFormData {
   experience: string;
   difficulty: string;
   duration: number;
-  interviewMode?: string;
-  selectedRounds?: string[];
-  roundDurations?: Record<string, number>;
   scheduledDate: string;
   scheduledTime: string;
-  technicalRounds?: number;
 }
 
 const InterviewSetup: React.FC = () => {
@@ -83,9 +58,6 @@ const InterviewSetup: React.FC = () => {
   const [interviewTypes, setInterviewTypes] = useState<InterviewType[]>([]);
   const [experienceLevels, setExperienceLevels] = useState<LevelOption[]>([]);
   const [difficultyLevels, setDifficultyLevels] = useState<LevelOption[]>([]);
-  const [availableRounds, setAvailableRounds] = useState<any[]>([]);
-  const [interviewModes, setInterviewModes] = useState<InterviewMode[]>([]);
-  const [customRounds, setCustomRounds] = useState<InterviewRound[]>([]);
   const [jobSuggestions, setJobSuggestions] = useState<JobSuggestion[]>([]);
   
   // Set default date to tomorrow and time to 2 PM
@@ -101,12 +73,8 @@ const InterviewSetup: React.FC = () => {
     experience: '',
     difficulty: 'medium',
     duration: 20,
-    interviewMode: '',
-    selectedRounds: [],
-    roundDurations: {},
     scheduledDate: defaultDate,
-    scheduledTime: defaultTime,
-    technicalRounds: 1
+    scheduledTime: defaultTime
   });
 
   // Generate job suggestions based on popular roles
@@ -167,17 +135,6 @@ const InterviewSetup: React.FC = () => {
     setFormData(prev => ({ ...prev, interviewType: type }));
   };
 
-  const handleModeSelect = (mode: string) => {
-    setFormData(prev => ({ 
-      ...prev, 
-      interviewMode: mode,
-      // Reset duration based on mode
-      duration: mode === 'complete' 
-        ? availableRounds.reduce((total, round) => total + round.duration, 0)
-        : 20
-    }));
-  };
-
   const handleJobSuggestionSelect = (suggestion: JobSuggestion) => {
     setFormData(prev => ({
       ...prev,
@@ -186,25 +143,15 @@ const InterviewSetup: React.FC = () => {
     }));
   };
 
-  const handleTechnicalRoundsChange = (increment: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      technicalRounds: increment 
-        ? Math.min((prev.technicalRounds || 1) + 1, 5)
-        : Math.max((prev.technicalRounds || 1) - 1, 1)
-    }));
-  };
-
   const isStepValid = () => {
-    if (step === 1) return !!formData.interviewMode;
-    if (step === 2) return !!formData.interviewType;
-    if (step === 3) return !!formData.role;
-    if (step === 4) return !!formData.scheduledDate && !!formData.scheduledTime && !!formData.difficulty;
+    if (step === 1) return !!formData.interviewType;
+    if (step === 2) return !!formData.role;
+    if (step === 3) return !!formData.scheduledDate && !!formData.scheduledTime && !!formData.difficulty;
     return true;
   };
 
   const handleNext = async () => {
-    if (step < 5) {
+    if (step < 4) {
       setStep(step + 1);
     } else {
       // Submit and navigate to interview
@@ -259,36 +206,6 @@ const InterviewSetup: React.FC = () => {
         setExperienceLevels(expLevels);
         setDifficultyLevels(diffLevels);
         
-        // Load available Tavus rounds
-        const rounds = getInterviewRounds();
-        setAvailableRounds(rounds);
-        
-        // Setup interview modes based on available rounds
-        const modes: InterviewMode[] = [
-          {
-            id: 'single',
-            name: 'Single Round',
-            description: 'Practice one specific interview round',
-            icon: <User className="h-6 w-6" />,
-            rounds: ['single'],
-            duration: 20
-          }
-        ];
-        
-        if (rounds.length >= 2) {
-          modes.push({
-            id: 'complete',
-            name: 'Complete Interview',
-            description: 'Full interview process with multiple rounds',
-            icon: <Users className="h-6 w-6" />,
-            rounds: rounds.map(r => r.id),
-            duration: rounds.reduce((total, round) => total + round.duration, 0),
-            maxRounds: 5
-          });
-        }
-        
-        setInterviewModes(modes);
-        
         // Generate job suggestions
         generateJobSuggestions();
       } catch (error) {
@@ -338,15 +255,15 @@ const InterviewSetup: React.FC = () => {
                   {/* Progress indicator */}
                   <div className="mb-8">
                     <div className="flex items-center justify-between">
-                      {[1, 2, 3, 4, 5].map((stepNumber) => (
+                      {[1, 2, 3, 4].map((stepNumber) => (
                         <div key={stepNumber} className="flex items-center">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                             step >= stepNumber ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'
                           }`}>
                             {step > stepNumber ? <Check className="h-5 w-5" /> : stepNumber}
                           </div>
-                          {stepNumber < 5 && (
-                            <div className={`h-1 w-12 ${
+                          {stepNumber < 4 && (
+                            <div className={`h-1 w-16 ${
                               step > stepNumber ? 'bg-primary-600' : 'bg-gray-200'
                             }`}></div>
                           )}
@@ -354,69 +271,15 @@ const InterviewSetup: React.FC = () => {
                       ))}
                     </div>
                     <div className="flex justify-between mt-2 text-sm text-gray-600">
-                      <span>Mode</span>
-                      <span>Type</span>
-                      <span>Details</span>
-                      <span>Schedule</span>
+                      <span>Interview Type</span>
+                      <span>Job Details</span>
+                      <span>Schedule & Settings</span>
                       <span>Review</span>
                     </div>
                   </div>
                   
-                  {/* Step 1: Interview Mode */}
+                  {/* Step 1: Interview Type */}
                   {step === 1 && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <h2 className="text-xl font-semibold mb-6">Select Interview Mode</h2>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                        {interviewModes.map((mode) => (
-                          <InterviewModeCard
-                            key={mode.id}
-                            mode={mode}
-                            selected={formData.interviewMode === mode.id}
-                            onSelect={handleModeSelect}
-                            availableRounds={availableRounds}
-                          />
-                        ))}
-                      </div>
-                      
-                      {formData.interviewMode === 'complete' && availableRounds.length > 0 && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                          <h3 className="font-medium text-blue-900 mb-2">Complete Interview Process</h3>
-                          <div className="space-y-2">
-                            {availableRounds.map((round, index) => (
-                              <div key={round.id} className="flex items-center gap-3 text-sm">
-                                <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-medium">
-                                  {index + 1}
-                                </div>
-                                <span className="font-medium">{round.name}</span>
-                                <span className="text-gray-600">({round.duration} min)</span>
-                              </div>
-                            ))}
-                            {formData.interviewMode === 'complete' && formData.interviewType === 'technical' && (
-                              <div className="flex items-center gap-3 text-sm">
-                                <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-medium">
-                                  +
-                                </div>
-                                <span className="font-medium">Additional Technical Rounds</span>
-                                <span className="text-gray-600">(configurable)</span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="mt-3 text-sm text-blue-700">
-                            Total duration: {availableRounds.reduce((total, round) => total + round.duration, 0)}+ minutes
-                          </div>
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                  
-                  {/* Step 2: Interview Type */}
-                  {step === 2 && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -438,47 +301,11 @@ const InterviewSetup: React.FC = () => {
                           />
                         ))}
                       </div>
-
-                      {/* Technical Rounds Configuration for Complete Mode */}
-                      {formData.interviewMode === 'complete' && formData.interviewType === 'technical' && (
-                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                          <h3 className="font-medium text-purple-900 mb-3">Technical Rounds Configuration</h3>
-                          <div className="flex items-center gap-4">
-                            <span className="text-sm text-purple-700">Number of technical rounds:</span>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleTechnicalRoundsChange(false)}
-                                disabled={formData.technicalRounds === 1}
-                                className="w-8 h-8 p-0"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                              <span className="w-8 text-center font-medium">{formData.technicalRounds}</span>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleTechnicalRoundsChange(true)}
-                                disabled={formData.technicalRounds === 5}
-                                className="w-8 h-8 p-0"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          <p className="text-xs text-purple-600 mt-2">
-                            Each round will focus on different technical aspects (coding, system design, architecture, etc.)
-                          </p>
-                        </div>
-                      )}
                     </motion.div>
                   )}
                   
-                  {/* Step 3: Job Details */}
-                  {step === 3 && (
+                  {/* Step 2: Job Details */}
+                  {step === 2 && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -567,8 +394,8 @@ const InterviewSetup: React.FC = () => {
                     </motion.div>
                   )}
                   
-                  {/* Step 4: Schedule & Settings */}
-                  {step === 4 && (
+                  {/* Step 3: Schedule & Settings */}
+                  {step === 3 && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -651,40 +478,28 @@ const InterviewSetup: React.FC = () => {
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {formData.interviewMode === 'complete' ? 'Total Duration' : 'Interview Duration'} (minutes)
+                            Interview Duration (minutes)
                           </label>
-                          {formData.interviewMode === 'complete' ? (
-                            <div className="p-3 bg-gray-50 rounded-lg">
-                              <span className="text-lg font-medium">{formData.duration} minutes</span>
-                              <p className="text-sm text-gray-600 mt-1">
-                                Duration is automatically calculated based on selected rounds
-                                {formData.technicalRounds && formData.technicalRounds > 1 && 
-                                  ` (includes ${formData.technicalRounds} technical rounds)`
-                                }
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-4">
-                              <input
-                                type="range"
-                                name="duration"
-                                min="10"
-                                max="60"
-                                step="5"
-                                value={formData.duration}
-                                onChange={handleInputChange}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                              />
-                              <span className="w-12 text-center font-medium">{formData.duration}</span>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-4">
+                            <input
+                              type="range"
+                              name="duration"
+                              min="10"
+                              max="60"
+                              step="5"
+                              value={formData.duration}
+                              onChange={handleInputChange}
+                              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                            />
+                            <span className="w-12 text-center font-medium">{formData.duration}</span>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
                   )}
                   
-                  {/* Step 5: Review */}
-                  {step === 5 && (
+                  {/* Step 4: Review */}
+                  {step === 4 && (
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -697,12 +512,6 @@ const InterviewSetup: React.FC = () => {
                         <h3 className="font-medium mb-4">Interview Summary</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                           <div className="space-y-3">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Mode:</span>
-                              <span className="font-medium text-gray-900 capitalize">
-                                {formData.interviewMode === 'complete' ? 'Complete Interview' : 'Single Round'}
-                              </span>
-                            </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Type:</span>
                               <span className="font-medium text-gray-900 capitalize">{formData.interviewType}</span>
@@ -743,12 +552,6 @@ const InterviewSetup: React.FC = () => {
                                 })}
                               </span>
                             </div>
-                            {formData.technicalRounds && formData.technicalRounds > 1 && (
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Technical Rounds:</span>
-                                <span className="font-medium text-gray-900">{formData.technicalRounds}</span>
-                              </div>
-                            )}
                           </div>
                         </div>
                         
@@ -793,7 +596,7 @@ const InterviewSetup: React.FC = () => {
                       {submitting && (
                         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                       )}
-                      {step < 5 ? 'Continue' : 'Start Interview'}
+                      {step < 4 ? 'Continue' : 'Start Interview'}
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -880,71 +683,6 @@ const InterviewTypeCard: React.FC<InterviewTypeCardProps> = ({
       <h3 className="font-medium mb-1">{title}</h3>
       <p className="text-sm text-gray-600">{description}</p>
       {selected && (
-        <div className="mt-3 text-primary-600 text-sm font-medium flex items-center gap-1">
-          <Check className="h-4 w-4" />
-          Selected
-        </div>
-      )}
-    </div>
-  );
-};
-
-interface InterviewModeCardProps {
-  mode: InterviewMode;
-  selected: boolean;
-  onSelect: (modeId: string) => void;
-  availableRounds: any[];
-}
-
-const InterviewModeCard: React.FC<InterviewModeCardProps> = ({
-  mode,
-  selected,
-  onSelect,
-  availableRounds,
-}) => {
-  const isDisabled = mode.id === 'complete' && availableRounds.length < 2;
-  
-  return (
-    <div
-      className={`border rounded-lg p-4 cursor-pointer transition-all ${
-        isDisabled 
-          ? 'border-gray-200 bg-gray-50 cursor-not-allowed opacity-60'
-          : selected
-            ? 'border-primary-600 bg-primary-50 shadow-sm'
-            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-      }`}
-      onClick={() => !isDisabled && onSelect(mode.id)}
-    >
-      <div className={`w-10 h-10 rounded-full mb-3 flex items-center justify-center ${
-        isDisabled
-          ? 'bg-gray-200'
-          : selected 
-            ? 'bg-primary-100' 
-            : 'bg-gray-100'
-      }`}>
-        <div className={
-          isDisabled
-            ? 'text-gray-400'
-            : selected 
-              ? 'text-primary-600' 
-              : 'text-gray-600'
-        }>
-          {mode.icon}
-        </div>
-      </div>
-      <h3 className="font-medium mb-1">{mode.name}</h3>
-      <p className="text-sm text-gray-600 mb-2">{mode.description}</p>
-      
-      {mode.id === 'complete' && (
-        <div className="text-xs text-gray-500">
-          {isDisabled 
-            ? 'Requires multiple AI interviewers' 
-            : `${availableRounds.length} rounds available`
-          }
-        </div>
-      )}
-      
-      {selected && !isDisabled && (
         <div className="mt-3 text-primary-600 text-sm font-medium flex items-center gap-1">
           <Check className="h-4 w-4" />
           Selected
