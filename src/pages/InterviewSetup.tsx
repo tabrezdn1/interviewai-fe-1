@@ -1165,11 +1165,3 @@ const InterviewSetup: React.FC = () => {
 };
 
 export default InterviewSetup;
-
-export default InterviewSetup
-
-export default InterviewSetup
-
-export default InterviewSetup
-
-export default InterviewSetup
