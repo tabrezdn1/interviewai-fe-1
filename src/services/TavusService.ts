@@ -18,6 +18,7 @@ export interface TavusConversationConfig {
     enable_recording?: boolean;
     enable_transcription?: boolean;
     language?: string;
+    apply_greenscreen?: boolean;
   };
 }
 
@@ -65,7 +66,7 @@ class TavusService {
           enable_recording: config.properties?.enable_recording ?? true,
           enable_transcription: config.properties?.enable_transcription ?? true,
           language: config.properties?.language || 'English',
-          ...config.properties
+          apply_greenscreen: config.properties?.apply_greenscreen ?? true,
         }
       };
 

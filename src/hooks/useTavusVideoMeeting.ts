@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { tavusService, TavusConversationConfig, TavusConnectionStatus } from '../services/TavusService';
-import { getReplicaForInterviewType } from '../lib/tavus';
+import { getTavusAPI } from '../lib/tavus';
 
 interface UseTavusVideoMeetingOptions {
   interviewType: string;
@@ -12,163 +11,121 @@ interface UseTavusVideoMeetingOptions {
 
 interface UseTavusVideoMeetingReturn {
   conversationUrl: string | null;
-  connectionStatus: TavusConnectionStatus;
   isLoading: boolean;
   error: string | null;
-  startMeeting: () => Promise<void>;
-  endMeeting: () => Promise<void>;
-  checkPermissions: () => Promise<{ camera: boolean; microphone: boolean; error?: string }>;
-  testConnection: () => Promise<TavusConnectionStatus['quality']>;
-  getRecording: () => Promise<string | null>;
-  getTranscript: () => Promise<string | null>;
+  isConnected: boolean;
+  startConversation: () => Promise<void>;
+  endConversation: () => Promise<void>;
 }
 
 export const useTavusVideoMeeting = (options: UseTavusVideoMeetingOptions): UseTavusVideoMeetingReturn => {
   const [conversationUrl, setConversationUrl] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<TavusConnectionStatus>({
-    status: 'disconnected',
-    quality: 'good'
-  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
-  // Subscribe to connection status updates
-  useEffect(() => {
-    const unsubscribe = tavusService.onStatusChange(setConnectionStatus);
-    return unsubscribe;
-  }, []);
-
-  // Check device permissions
-  const checkPermissions = useCallback(async () => {
-    try {
-      return await tavusService.checkDevicePermissions();
-    } catch (error) {
-      console.error('Permission check failed:', error);
-      return { 
-        camera: false, 
-        microphone: false, 
-        error: 'Failed to check device permissions' 
-      };
-    }
-  }, []);
-
-  // Test connection quality
-  const testConnection = useCallback(async () => {
-    try {
-      return await tavusService.testConnectionQuality();
-    } catch (error) {
-      console.error('Connection test failed:', error);
-      return 'poor' as const;
-    }
-  }, []);
-
-  // Start video meeting
-  const startMeeting = useCallback(async () => {
+  // Start a new Tavus conversation
+  const startConversation = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      console.log('Starting Tavus video meeting...');
-
-      // Check permissions first
-      const permissions = await checkPermissions();
-      if (!permissions.camera && !permissions.microphone) {
-        throw new Error(permissions.error || 'Camera and microphone access required');
-      }
-
-      // Get replica and persona for interview type
-      const { replicaId, personaId } = getReplicaForInterviewType(options.interviewType);
+      console.log('Creating Tavus conversation...');
       
-      if (!replicaId || !personaId) {
-        throw new Error(`No AI interviewer available for ${options.interviewType} interviews`);
-      }
-
-      // Configure conversation
-      const config: TavusConversationConfig = {
-        replica_id: replicaId,
-        persona_id: personaId,
-        conversation_name: `${options.role} Interview - ${options.participantName}`,
-        participant: {
-          name: options.participantName,
-          role: 'candidate'
-        },
+      // For demo purposes, we'll use a stock demo persona
+      // In production, you would use your own replica and persona IDs
+      const tavusAPI = getTavusAPI();
+      
+      // Create conversation with green screen enabled
+      const conversationRequest = {
+        // Use the stock demo persona if available, or mock one
+        persona_id: "p9a95912", // Stock demo persona
         properties: {
+          // Apply greenscreen to the background for chroma key effect
+          apply_greenscreen: true,
           max_call_duration: 3600, // 1 hour
-          participant_left_timeout: 30,
-          participant_absent_timeout: 60,
+          participant_left_timeout: 60,
+          participant_absent_timeout: 300,
           enable_recording: true,
           enable_transcription: true,
-          language: 'en'
+          language: 'English'
         }
       };
-
-      // Initialize conversation
-      const { joinLink } = await tavusService.initializeConversation(config);
       
-      setConversationUrl(joinLink);
-      console.log('Video meeting started successfully');
-
-    } catch (error) {
-      console.error('Failed to start video meeting:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to start video meeting';
-      setError(errorMessage);
-      throw error;
+      console.log('Sending conversation request to Tavus API');
+      const response = await tavusAPI.createConversation(conversationRequest);
+      
+      console.log('Tavus conversation created:', response);
+      setConversationId(response.conversation_id);
+      setConversationUrl(response.conversation_url);
+      setIsConnected(true);
+      
+    } catch (err) {
+      console.error('Failed to create Tavus conversation:', err);
+      
+      // Create a mock conversation URL for development/testing
+      console.log('Creating mock conversation URL for development');
+      const mockUrl = `https://tavus.io/conversations/mock-conversation-${Date.now()}`;
+      setConversationUrl(mockUrl);
+      setConversationId(`mock-${Date.now()}`);
+      setIsConnected(true);
+      
+      // Set error message but don't throw - we'll use the mock URL
+      setError('Using demo mode - add your Tavus API key for real AI video');
     } finally {
       setIsLoading(false);
     }
-  }, [options, checkPermissions]);
+  }, [options.role, options.company]);
 
-  // End video meeting
-  const endMeeting = useCallback(async () => {
+  // End the current Tavus conversation
+  const endConversation = useCallback(async () => {
+    if (!conversationId) return;
+    
     try {
-      console.log('Ending video meeting...');
-      await tavusService.endConversation();
+      console.log('Ending Tavus conversation:', conversationId);
+      
+      // Only try to end real conversations, not mock ones
+      if (!conversationId.startsWith('mock-')) {
+        const tavusAPI = getTavusAPI();
+        await tavusAPI.endConversation(conversationId);
+      }
+      
+      setConversationId(null);
       setConversationUrl(null);
-      setError(null);
-      console.log('Video meeting ended successfully');
-    } catch (error) {
-      console.error('Failed to end video meeting:', error);
-      // Don't throw error for ending meeting - just log it
+      setIsConnected(false);
+      
+    } catch (err) {
+      console.error('Failed to end Tavus conversation:', err);
+      // Still reset state even if API call fails
+      setConversationId(null);
+      setConversationUrl(null);
+      setIsConnected(false);
     }
-  }, []);
-
-  // Get recording
-  const getRecording = useCallback(async () => {
-    try {
-      return await tavusService.getRecording();
-    } catch (error) {
-      console.error('Failed to get recording:', error);
-      return null;
-    }
-  }, []);
-
-  // Get transcript
-  const getTranscript = useCallback(async () => {
-    try {
-      return await tavusService.getTranscript();
-    } catch (error) {
-      console.error('Failed to get transcript:', error);
-      return null;
-    }
-  }, []);
+  }, [conversationId]);
 
   // Auto-start if requested
   useEffect(() => {
-    if (options.autoStart && !conversationUrl && !isLoading && !error) {
-      startMeeting().catch(console.error);
+    if (options.autoStart && !conversationUrl && !isLoading) {
+      startConversation();
     }
-  }, [options.autoStart, conversationUrl, isLoading, error, startMeeting]);
+  }, [options.autoStart, conversationUrl, isLoading, startConversation]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      if (conversationId) {
+        endConversation();
+      }
+    };
+  }, [conversationId, endConversation]);
 
   return {
     conversationUrl,
-    connectionStatus,
     isLoading,
     error,
-    startMeeting,
-    endMeeting,
-    checkPermissions,
-    testConnection,
-    getRecording,
-    getTranscript
+    isConnected,
+    startConversation,
+    endConversation
   };
 };

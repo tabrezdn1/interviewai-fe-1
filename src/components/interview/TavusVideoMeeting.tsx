@@ -1,14 +1,9 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
-  Video, VideoOff, Mic, MicOff, PhoneOff, Settings, 
-  Wifi, WifiOff, AlertCircle, Loader2, Monitor, Users,
-  Volume2, VolumeX, Maximize, Minimize
+  Video, VideoOff, Mic, MicOff, PhoneOff, 
+  Volume2, VolumeX, Loader2, AlertCircle
 } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Card, CardContent } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
-import { tavusService, TavusConnectionStatus } from '../../services/TavusService';
 
 interface TavusVideoMeetingProps {
   conversationUrl: string;
@@ -16,12 +11,6 @@ interface TavusVideoMeetingProps {
   onMeetingEnd: () => void;
   onError: (error: string) => void;
   className?: string;
-}
-
-interface MediaStreamState {
-  video: boolean;
-  audio: boolean;
-  stream: MediaStream | null;
 }
 
 const TavusVideoMeeting: React.FC<TavusVideoMeetingProps> = ({
@@ -32,498 +21,275 @@ const TavusVideoMeeting: React.FC<TavusVideoMeetingProps> = ({
   className = ''
 }) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  
-  const [connectionStatus, setConnectionStatus] = useState<TavusConnectionStatus>({
-    status: 'connecting',
-    quality: 'good'
-  });
-  const [mediaState, setMediaState] = useState<MediaStreamState>({
-    video: true,
-    audio: true,
-    stream: null
-  });
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
+  const [hasVideo, setHasVideo] = useState(true);
+  const [hasAudio, setHasAudio] = useState(true);
 
-  // Initialize media stream
-  const initializeMediaStream = useCallback(async () => {
-    try {
-      console.log('Initializing media stream...');
-      
-      const constraints = {
-        video: {
-          width: { min: 640, ideal: 1280, max: 1920 },
-          height: { min: 480, ideal: 720, max: 1080 },
-          frameRate: { ideal: 30, max: 60 },
-          facingMode: 'user'
-        },
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          sampleRate: 48000,
-          channelCount: 1
-        }
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      
-      setMediaState(prev => ({ ...prev, stream }));
-      
-      // Set up local video
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-        localVideoRef.current.play().catch(console.error);
-      }
-      
-      console.log('Media stream initialized successfully');
-      tavusService.updateConnectionStatus({ status: 'connected' });
-      
-    } catch (error) {
-      console.error('Failed to initialize media stream:', error);
-      
-      let errorMessage = 'Failed to access camera and microphone';
-      if (error instanceof Error) {
-        if (error.name === 'NotAllowedError') {
-          errorMessage = 'Camera and microphone access denied. Please allow permissions and refresh.';
-        } else if (error.name === 'NotFoundError') {
-          errorMessage = 'No camera or microphone found on this device.';
-        }
-      }
-      
-      setError(errorMessage);
-      onError(errorMessage);
-      tavusService.updateConnectionStatus({ status: 'failed', error: errorMessage });
-    }
-  }, [onError]);
-
-  // Handle iframe load
-  const handleIframeLoad = useCallback(() => {
-    console.log('Tavus iframe loaded');
-    setIsLoading(false);
-    tavusService.updateConnectionStatus({ status: 'connected' });
-  }, []);
-
-  // Handle iframe error
-  const handleIframeError = useCallback(() => {
-    console.error('Tavus iframe failed to load');
-    const errorMessage = 'Failed to load video meeting interface';
-    setError(errorMessage);
-    onError(errorMessage);
-    setIsLoading(false);
-    tavusService.updateConnectionStatus({ status: 'failed', error: errorMessage });
-  }, [onError]);
-
-  // Toggle video
-  const toggleVideo = useCallback(() => {
-    if (mediaState.stream) {
-      const videoTracks = mediaState.stream.getVideoTracks();
-      const newVideoState = !mediaState.video;
-      
-      videoTracks.forEach(track => {
-        track.enabled = newVideoState;
-      });
-      
-      setMediaState(prev => ({ ...prev, video: newVideoState }));
-      
-      // Send message to Tavus iframe
-      if (iframeRef.current) {
-        try {
-          iframeRef.current.contentWindow?.postMessage({
-            type: 'toggleVideo',
-            enabled: newVideoState
-          }, '*');
-        } catch (error) {
-          console.warn('Could not communicate with Tavus iframe:', error);
-        }
-      }
-    }
-  }, [mediaState.stream, mediaState.video]);
-
-  // Toggle audio
-  const toggleAudio = useCallback(() => {
-    if (mediaState.stream) {
-      const audioTracks = mediaState.stream.getAudioTracks();
-      const newAudioState = !mediaState.audio;
-      
-      audioTracks.forEach(track => {
-        track.enabled = newAudioState;
-      });
-      
-      setMediaState(prev => ({ ...prev, audio: newAudioState }));
-      
-      // Send message to Tavus iframe
-      if (iframeRef.current) {
-        try {
-          iframeRef.current.contentWindow?.postMessage({
-            type: 'toggleAudio',
-            enabled: newAudioState
-          }, '*');
-        } catch (error) {
-          console.warn('Could not communicate with Tavus iframe:', error);
-        }
-      }
-    }
-  }, [mediaState.stream, mediaState.audio]);
-
-  // Toggle mute for AI interviewer
-  const toggleMute = useCallback(() => {
-    setIsMuted(prev => {
-      const newMutedState = !prev;
-      
-      // Send message to Tavus iframe
-      if (iframeRef.current) {
-        try {
-          iframeRef.current.contentWindow?.postMessage({
-            type: 'toggleMute',
-            muted: newMutedState
-          }, '*');
-        } catch (error) {
-          console.warn('Could not communicate with Tavus iframe:', error);
-        }
-      }
-      
-      return newMutedState;
-    });
-  }, []);
-
-  // Toggle fullscreen
-  const toggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => {
-        setIsFullscreen(true);
-      }).catch(console.error);
-    } else {
-      document.exitFullscreen().then(() => {
-        setIsFullscreen(false);
-      }).catch(console.error);
-    }
-  }, []);
-
-  // Leave meeting
-  const leaveMeeting = useCallback(async () => {
-    try {
-      console.log('Leaving meeting...');
-      
-      // Stop local media stream
-      if (mediaState.stream) {
-        mediaState.stream.getTracks().forEach(track => track.stop());
-      }
-      
-      // End Tavus conversation
-      await tavusService.endConversation();
-      
-      // Notify parent component
-      onMeetingEnd();
-      
-    } catch (error) {
-      console.error('Error leaving meeting:', error);
-      // Still call onMeetingEnd even if there's an error
-      onMeetingEnd();
-    }
-  }, [mediaState.stream, onMeetingEnd]);
-
-  // Initialize on mount
-  useEffect(() => {
-    initializeMediaStream();
-    
-    // Subscribe to connection status updates
-    const unsubscribe = tavusService.onStatusChange(setConnectionStatus);
-    
-    // Test connection quality
-    tavusService.testConnectionQuality();
-    
-    return () => {
-      unsubscribe();
-      // Cleanup media stream
-      if (mediaState.stream) {
-        mediaState.stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [initializeMediaStream]);
-
-  // Handle iframe events
+  // Handle iframe load event
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
-    iframe.addEventListener('load', handleIframeLoad);
-    iframe.addEventListener('error', handleIframeError);
+    const handleLoad = () => {
+      console.log('Tavus iframe loaded successfully');
+      setIsLoading(false);
+    };
+
+    const handleError = () => {
+      const errorMsg = 'Failed to load Tavus video conversation';
+      console.error(errorMsg);
+      setError(errorMsg);
+      onError(errorMsg);
+      setIsLoading(false);
+    };
+
+    iframe.addEventListener('load', handleLoad);
+    iframe.addEventListener('error', handleError);
 
     return () => {
-      iframe.removeEventListener('load', handleIframeLoad);
-      iframe.removeEventListener('error', handleIframeError);
+      iframe.removeEventListener('load', handleLoad);
+      iframe.removeEventListener('error', handleError);
     };
-  }, [handleIframeLoad, handleIframeError]);
+  }, [onError]);
 
-  // Get connection status color
-  const getStatusColor = (status: TavusConnectionStatus['status']) => {
-    switch (status) {
-      case 'connected': return 'text-green-500';
-      case 'connecting': case 'reconnecting': return 'text-yellow-500';
-      case 'failed': case 'disconnected': return 'text-red-500';
-      default: return 'text-gray-500';
+  // Handle message events from the iframe
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Only process messages from Tavus
+      if (event.origin !== 'https://tavus.io') return;
+      
+      try {
+        const data = event.data;
+        console.log('Received message from Tavus:', data);
+        
+        // Handle different message types
+        if (data.type === 'connectionStatus') {
+          // Update connection status
+        } else if (data.type === 'meetingEnded') {
+          onMeetingEnd();
+        } else if (data.type === 'error') {
+          setError(data.message || 'An error occurred with the video call');
+          onError(data.message || 'An error occurred with the video call');
+        }
+      } catch (error) {
+        console.error('Error processing message from Tavus:', error);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [onMeetingEnd, onError]);
+
+  // Toggle video
+  const toggleVideo = () => {
+    setHasVideo(!hasVideo);
+    
+    // Send message to Tavus iframe
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          { type: 'toggleVideo', enabled: !hasVideo },
+          '*'
+        );
+      } catch (error) {
+        console.warn('Could not send toggleVideo message to Tavus iframe:', error);
+      }
     }
   };
 
-  // Get quality indicator
-  const getQualityIndicator = (quality: TavusConnectionStatus['quality']) => {
-    const bars = quality === 'excellent' ? 4 : quality === 'good' ? 3 : quality === 'fair' ? 2 : 1;
-    return (
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4].map(i => (
-          <div
-            key={i}
-            className={`w-1 h-3 rounded-full ${
-              i <= bars ? 'bg-green-500' : 'bg-gray-300'
-            }`}
-          />
-        ))}
-      </div>
-    );
+  // Toggle audio
+  const toggleAudio = () => {
+    setHasAudio(!hasAudio);
+    
+    // Send message to Tavus iframe
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          { type: 'toggleAudio', enabled: !hasAudio },
+          '*'
+        );
+      } catch (error) {
+        console.warn('Could not send toggleAudio message to Tavus iframe:', error);
+      }
+    }
   };
+
+  // Toggle mute
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    
+    // Send message to Tavus iframe
+    if (iframeRef.current && iframeRef.current.contentWindow) {
+      try {
+        iframeRef.current.contentWindow.postMessage(
+          { type: 'toggleMute', muted: !isMuted },
+          '*'
+        );
+      } catch (error) {
+        console.warn('Could not send toggleMute message to Tavus iframe:', error);
+      }
+    }
+  };
+
+  // End meeting
+  const endMeeting = () => {
+    onMeetingEnd();
+  };
+
+  // Check if this is a mock conversation URL
+  const isMockConversation = !conversationUrl || 
+                            conversationUrl.includes('mock-conversation-') || 
+                            conversationUrl === 'https://tavus.io/conversations/mock-conversation';
 
   if (error) {
     return (
-      <Card className={`${className} bg-red-50 border-red-200`}>
-        <CardContent className="p-8 text-center">
+      <div className={`flex items-center justify-center bg-gray-800 rounded-xl ${className}`}>
+        <div className="text-center text-white p-8">
           <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-red-900 mb-2">Connection Error</h3>
-          <p className="text-red-700 mb-4">{error}</p>
-          <Button onClick={() => window.location.reload()} variant="outline">
-            Retry Connection
+          <h3 className="text-lg font-semibold mb-2">Video Error</h3>
+          <p className="text-gray-300 text-sm mb-4">{error}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline"
+            className="text-white border-white hover:bg-white hover:text-gray-900"
+          >
+            Retry
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+    );
+  }
+
+  if (isMockConversation) {
+    // Render a mock AI interviewer UI for development/testing
+    return (
+      <div className={`relative bg-gradient-to-br from-blue-900 to-purple-900 rounded-xl overflow-hidden ${className}`}>
+        <div className="w-full h-full min-h-[400px] flex flex-col items-center justify-center p-8">
+          <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <Video className="h-12 w-12 text-white" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2 text-white">AI Interviewer</h3>
+          <p className="text-blue-200 text-sm mb-4 text-center">
+            Demo Mode: AI interviewer simulation
+          </p>
+          
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-green-500/20 rounded-full text-green-300 text-xs mb-4">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            Live
+          </div>
+          
+          <p className="text-white/70 text-sm text-center max-w-md mb-6">
+            In demo mode, the AI interviewer is simulated. Add your Tavus API key to enable real AI video interviews.
+          </p>
+          
+          {/* Mock conversation controls */}
+          <div className="flex gap-3 mt-4">
+            <Button
+              onClick={toggleVideo}
+              variant="outline"
+              size="sm"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              {hasVideo ? <Video className="h-4 w-4 mr-2" /> : <VideoOff className="h-4 w-4 mr-2" />}
+              {hasVideo ? 'Camera On' : 'Camera Off'}
+            </Button>
+            
+            <Button
+              onClick={toggleAudio}
+              variant="outline"
+              size="sm"
+              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+            >
+              {hasAudio ? <Mic className="h-4 w-4 mr-2" /> : <MicOff className="h-4 w-4 mr-2" />}
+              {hasAudio ? 'Mic On' : 'Mic Off'}
+            </Button>
+            
+            <Button
+              onClick={endMeeting}
+              variant="destructive"
+              size="sm"
+            >
+              <PhoneOff className="h-4 w-4 mr-2" />
+              End
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
     <div className={`relative bg-gray-900 rounded-xl overflow-hidden ${className}`}>
-      {/* Main video area */}
-      <div className="relative w-full h-full min-h-[500px]">
-        {/* Tavus AI Interviewer */}
-        <iframe
-          ref={iframeRef}
-          src={conversationUrl}
-          className="w-full h-full border-0"
-          allow="camera; microphone; autoplay; encrypted-media; fullscreen; display-capture"
-          allowFullScreen
-          title="AI Interviewer"
-          sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
-        />
-        
-        {/* Loading overlay */}
-        {isLoading && (
-          <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
-            <div className="text-center text-white">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3" />
-              <p className="text-sm">Connecting to AI interviewer...</p>
-              <p className="text-xs text-gray-400 mt-2">This may take a few moments</p>
-            </div>
-          </div>
-        )}
-        
-        {/* Local video feed */}
-        <div className="absolute top-4 right-4 w-48 h-36 bg-gray-800 rounded-lg overflow-hidden border-2 border-gray-600">
-          {mediaState.video && mediaState.stream ? (
-            <video
-              ref={localVideoRef}
-              autoPlay
-              muted
-              playsInline
-              className="w-full h-full object-cover transform scale-x-[-1]"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gray-800">
-              <VideoOff className="h-8 w-8 text-gray-500" />
-            </div>
-          )}
-          
-          {/* Local video label */}
-          <div className="absolute bottom-2 left-2 px-2 py-1 bg-black bg-opacity-50 rounded text-white text-xs">
-            You
-          </div>
-          
-          {/* Media status indicators */}
-          <div className="absolute top-2 right-2 flex gap-1">
-            <div className={`w-2 h-2 rounded-full ${mediaState.video ? 'bg-green-400' : 'bg-red-400'}`} />
-            <div className={`w-2 h-2 rounded-full ${mediaState.audio ? 'bg-green-400' : 'bg-red-400'}`} />
+      {/* Tavus iframe */}
+      <iframe
+        ref={iframeRef}
+        src={conversationUrl}
+        className="w-full h-full min-h-[400px] border-0"
+        allow="camera; microphone; autoplay; encrypted-media; fullscreen; display-capture"
+        allowFullScreen
+        title="Tavus AI Interviewer"
+        sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-modals"
+      />
+      
+      {/* Loading overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+          <div className="text-center text-white">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3" />
+            <p className="text-sm">Connecting to AI interviewer...</p>
+            <p className="text-xs text-gray-400 mt-2">This may take a few moments</p>
           </div>
         </div>
-        
-        {/* Connection status */}
-        <div className="absolute top-4 left-4 flex items-center gap-3 bg-black bg-opacity-50 rounded-lg px-3 py-2">
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${
-              connectionStatus.status === 'connected' ? 'bg-green-400' : 
-              connectionStatus.status === 'connecting' || connectionStatus.status === 'reconnecting' ? 'bg-yellow-400' : 
-              'bg-red-400'
-            } ${connectionStatus.status === 'connecting' || connectionStatus.status === 'reconnecting' ? 'animate-pulse' : ''}`} />
-            <span className={`text-sm font-medium ${getStatusColor(connectionStatus.status)}`}>
-              {connectionStatus.status === 'connected' ? 'Connected' :
-               connectionStatus.status === 'connecting' ? 'Connecting...' :
-               connectionStatus.status === 'reconnecting' ? 'Reconnecting...' :
-               connectionStatus.status === 'failed' ? 'Failed' : 'Disconnected'}
-            </span>
-          </div>
-          
-          {connectionStatus.status === 'connected' && (
-            <div className="flex items-center gap-2">
-              {getQualityIndicator(connectionStatus.quality)}
-              <span className="text-xs text-gray-300">
-                {connectionStatus.latency && `${connectionStatus.latency}ms`}
-              </span>
-            </div>
-          )}
-        </div>
-        
-        {/* Participant info */}
-        <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 rounded-lg px-3 py-2">
-          <div className="flex items-center gap-2 text-white">
-            <Users className="h-4 w-4" />
-            <span className="text-sm font-medium">AI Interviewer</span>
-            <Badge variant="outline" className="text-xs border-green-400 text-green-400">
-              Live
-            </Badge>
-          </div>
-        </div>
-      </div>
+      )}
       
       {/* Control bar */}
-      <div className="absolute bottom-0 left-0 right-0 bg-gray-900 bg-opacity-90 backdrop-blur-sm border-t border-gray-700 p-4">
+      <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm p-4">
         <div className="flex items-center justify-between">
-          {/* Left controls */}
           <div className="flex items-center gap-3">
             <Button
               onClick={toggleVideo}
               variant="ghost"
               size="sm"
-              className={`p-3 rounded-full ${
-                mediaState.video 
-                  ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                  : 'bg-red-600 hover:bg-red-700 text-white'
-              }`}
+              className={`p-2 rounded-full ${
+                hasVideo ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'
+              } text-white`}
             >
-              {mediaState.video ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+              {hasVideo ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
             </Button>
             
             <Button
               onClick={toggleAudio}
               variant="ghost"
               size="sm"
-              className={`p-3 rounded-full ${
-                mediaState.audio 
-                  ? 'bg-gray-700 hover:bg-gray-600 text-white' 
-                  : 'bg-red-600 hover:bg-red-700 text-white'
-              }`}
+              className={`p-2 rounded-full ${
+                hasAudio ? 'bg-gray-700 hover:bg-gray-600' : 'bg-red-600 hover:bg-red-700'
+              } text-white`}
             >
-              {mediaState.audio ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+              {hasAudio ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
             </Button>
             
             <Button
               onClick={toggleMute}
               variant="ghost"
               size="sm"
-              className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white"
+              className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 text-white"
             >
               {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
             </Button>
           </div>
           
-          {/* Center - Participant name */}
-          <div className="text-white text-sm font-medium">
-            Interview with {participantName}
-          </div>
-          
-          {/* Right controls */}
-          <div className="flex items-center gap-3">
-            <Button
-              onClick={toggleFullscreen}
-              variant="ghost"
-              size="sm"
-              className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white"
-            >
-              {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-            </Button>
-            
-            <Button
-              onClick={() => setShowSettings(true)}
-              variant="ghost"
-              size="sm"
-              className="p-3 rounded-full bg-gray-700 hover:bg-gray-600 text-white"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
-            
-            <Button
-              onClick={leaveMeeting}
-              variant="destructive"
-              size="sm"
-              className="p-3 rounded-full bg-red-600 hover:bg-red-700 text-white"
-            >
-              <PhoneOff className="h-5 w-5" />
-            </Button>
-          </div>
+          <Button
+            onClick={endMeeting}
+            variant="destructive"
+            size="sm"
+            className="p-2 rounded-full"
+          >
+            <PhoneOff className="h-5 w-5" />
+          </Button>
         </div>
       </div>
-      
-      {/* Settings Dialog */}
-      <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Meeting Settings</DialogTitle>
-            <DialogDescription>
-              Adjust your video and audio settings
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium mb-2">Connection Quality</h4>
-              <div className="flex items-center gap-3">
-                {getQualityIndicator(connectionStatus.quality)}
-                <span className="text-sm text-gray-600 capitalize">
-                  {connectionStatus.quality}
-                </span>
-                {connectionStatus.latency && (
-                  <span className="text-xs text-gray-500">
-                    ({connectionStatus.latency}ms latency)
-                  </span>
-                )}
-              </div>
-            </div>
-            
-            <div>
-              <h4 className="font-medium mb-2">Media Status</h4>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Camera</span>
-                  <Badge variant={mediaState.video ? "default" : "destructive"}>
-                    {mediaState.video ? 'On' : 'Off'}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Microphone</span>
-                  <Badge variant={mediaState.audio ? "default" : "destructive"}>
-                    {mediaState.audio ? 'On' : 'Off'}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex justify-end">
-              <Button onClick={() => setShowSettings(false)}>
-                Close
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

@@ -35,9 +35,9 @@ const VideoInterviewSetup: React.FC<VideoInterviewSetupProps> = ({
   const [connectionQuality, setConnectionQuality] = useState<'poor' | 'fair' | 'good' | 'excellent'>('good');
   const [isChecking, setIsChecking] = useState(false);
 
+  // Use the Tavus video meeting hook
   const {
     conversationUrl,
-    isConnected,
     isLoading,
     error,
     startConversation
