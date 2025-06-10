@@ -298,7 +298,8 @@ const InterviewSessionContent: React.FC = () => {
                 <p className="text-gray-400 mb-6">Take a moment to collect your thoughts</p>
                 <Button
                   onClick={togglePause}
-                  className="inline-flex items-center gap-2"
+                  variant="interview"
+                  className="flex-1 text-base"
                 >
                   <PlayCircle className="h-5 w-5" />
                   Resume Interview

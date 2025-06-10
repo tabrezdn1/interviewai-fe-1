@@ -393,7 +393,8 @@ const VideoInterviewSetup: React.FC<VideoInterviewSetupProps> = ({
               <Button 
                 onClick={handleStartInterview} 
                 disabled={isLoading}
-                className="w-full"
+                variant="interview"
+                className="w-full text-base"
                 size="lg"
               >
                 {isLoading ? (

@@ -507,16 +507,15 @@ const InterviewSetup: React.FC = () => {
                     <Button
                       onClick={handleNext}
                       disabled={!isStepValid() || submitting}
-                     className={`flex items-center gap-2 ${step === 4 ? 'bg-gradient-to-r from-primary to-accent hover:shadow-lg hover:shadow-primary/20' : ''} ${
+                     className={`flex items-center gap-2 ${step === 4 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 hover:scale-105' : ''} ${
                         !isStepValid() || submitting ? 'opacity-50 cursor-not-allowed' : ''
                       }`}
-                     variant={step === 4 ? 'gradient' : 'default'}
+                     variant={step === 4 ? 'interview' : 'default'}
                     >
                       {submitting && (
                         <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
                       )}
-                      {step === 3 ? 'Start Interview' : 'Continue'}
-                      {step === 4 ? 'Start Interview' : 'Continue'}
+                      {step < 4 ? 'Continue' : 'Start Interview'}
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
